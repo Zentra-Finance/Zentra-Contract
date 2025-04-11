@@ -3,10 +3,12 @@ pragma solidity ^0.8.20;
 
 import {ERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IUniswapV2Factory} from "./interfaces/IUniswapV2Factory.sol";
 import {IUniswapV2Router02} from "./interfaces/IUniswapV2Router02.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol";
 
 contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     using SafeERC20 for IERC20;
@@ -57,7 +59,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
 
     constructor(
         Args memory args
-    ) payable ERC20(args.name, args.symbol){
+    ) payable ERC20(args.name, args.symbol) Ownable(msg.sender){
         _decimals = args._decimals;
         _totalSupply = args._totalSupply;
         serviceFeeReceiver = payable(args._serviceFeeReceiver);
