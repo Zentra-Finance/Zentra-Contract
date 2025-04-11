@@ -266,7 +266,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     }
     
     
-    function _transfer(
+    function _update(
         address from,
         address to,
         uint256 amount
@@ -274,7 +274,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
         if(whiteList[from] == true || whiteList[to] == true){ //whitelisted address
-            super._transfer(from, to, amount);
+            super._update(from, to, amount);
         }else{
             
             uint256 _swapFee;
@@ -296,7 +296,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                 whiteList[to] = true; // to avoid infinite looping for sending fees.
                 if(buyFee != 0){ // buy tax exist
                     _swapFee = amount * buyFee / 1000000;
-                    super._transfer(from, taxReceiver, _swapFee); // sending buy fee
+                    super._update(from, taxReceiver, _swapFee); // sending buy fee
                     amount = amount - _swapFee;
                 }
                 if(buyReward != 0){ // buy Reward exist
@@ -306,7 +306,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                     }else if(rewardToken == 2){ //reward token type is eth, for this sell rewardFee and send it to to wallet
                         require(dexType==2, "Can't work reward for V3!");
                         amount = amount -_rewardFee;
-                        super._transfer(from, address(this), _rewardFee);
+                        super._update(from, address(this), _rewardFee);
                         //selling rewardFee to send reward as ETH type to to wallet
                         initialBalance = address(this).balance;
                         swapTokensToETH(_rewardFee);
@@ -318,7 +318,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                 if(lpBuyFee != 0){ // lp buy Fee existy
                     require(dexType == 2, "Can't work lp adding for V3!");
                     _lpFee = amount * lpBuyFee / 1000000; // need to split this two and sell one and add liquidity
-                    super._transfer(from, address(this), _lpFee);
+                    super._update(from, address(this), _lpFee);
                     amount = amount - _lpFee;
                     uint256 lpBaseTokenAmount= _lpFee / 2;
                     initialBalance = address(this).balance;
@@ -328,9 +328,9 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                 }
                 if(buyBurnPercent != 0){
                     _burnFee = amount * buyBurnPercent / 1000000;
-                    super._transfer(from, address(0xdead), _burnFee);
+                    super._update(from, address(0xdead), _burnFee);
                 }
-                super._transfer(from, to, amount);
+                super._update(from, to, amount);
 
                 whiteList[to] = false; 
                 
@@ -343,7 +343,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                 whiteList[from] = true; // to avoid infinite looping for sending fees.
                 if(sellFee != 0){ //sell tax exist
                     _swapFee = amount * sellFee / 1000000;
-                    super._transfer(from, taxReceiver, _swapFee); // sending sell fee
+                    super._update(from, taxReceiver, _swapFee); // sending sell fee
                     amount = amount - _swapFee;
                 }
                 if(sellReward != 0) { // sell Reward exist
@@ -352,7 +352,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                         amount = amount - _rewardFee;
                     }else if(rewardToken == 2){ // reward token type is eth
                         require(dexType == 2, "Can't work reward for V3!");
-                        super._transfer(from, address(this), _rewardFee);
+                        super._update(from, address(this), _rewardFee);
                         initialBalance = address(this).balance;
                         swapTokensToETH(_rewardFee);
                         balanceAfter = address(this).balance;
@@ -364,7 +364,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                     require(dexType == 2, "Can't work lp adding for V3!");
                     _lpFee = amount * lpSellFee/1000000; // need to split this tow and sell one and add liquidity
                     amount = amount - _lpFee;
-                    super._transfer(from, address(this), _lpFee);
+                    super._update(from, address(this), _lpFee);
                     uint256 lpBaseTokenAmount= _lpFee / 2;
                     initialBalance = address(this).balance;
                     swapTokensToETH(_lpFee- lpBaseTokenAmount);
@@ -373,9 +373,9 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
                 }
                 if(sellBurnPercent != 0){
                     _burnFee = amount * sellBurnPercent / 1000000;
-                    super._transfer(from, address(0xdead), _burnFee);
+                    super._update(from, address(0xdead), _burnFee);
                 }
-                super._transfer(from, to, amount);
+                super._update(from, to, amount);
                 whiteList[from] = false; // to avoid infinite looping for sending fees.
             }
         }
