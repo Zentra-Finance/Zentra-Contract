@@ -2,200 +2,17 @@
 pragma solidity ^0.8.4;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
-
-
-interface IUniswapV2Router01 {
-    function factory() external pure returns (address);
-
-    function WETH() external pure returns (address);
-
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-}
-
-interface IUniswapV2Factory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
-
-    function feeTo() external view returns (address);
-
-    function feeToSetter() external view returns (address);
-
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
-
-    function allPairs(uint256) external view returns (address pair);
-
-    function allPairsLength() external view returns (uint256);
-
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-
-    function setFeeTo(address) external;
-
-    function setFeeToSetter(address) external;
-}
-
-interface IPool {
-    function initialize(
-        address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = Authority
-        uint256[16] memory _saleInfo,
-        string memory _poolDetails,
-        address[3] memory _linkAddress, // [0] factory ,[1] = manager
-        uint8 _version,
-        uint256 _contributeWithdrawFee,
-        string[3] memory _otherInfo
-    ) external;
-
-    function initializeVesting(uint256[3] memory _vestingInit) external;
-
-    function setKycAudit(bool _kyc, bool _audit, string memory _kyclink, string memory _auditlink) external;
-
-    function emergencyWithdrawLiquidity(address token_, address to_, uint256 amount_) external;
-
-    function emergencyWithdraw(address payable to_, uint256 amount_) external;
-
-    function setGovernance(address governance_) external;
-
-    function emergencyWithdrawToken(address payaddress, address tokenAddress, uint256 tokens) external;
-}
-
-interface IPrivatePool {
-    function initialize(
-        address[4] memory _addrs,
-        uint256[13] memory _saleInfo,
-        string memory _poolDetails,
-        address[3] memory _linkAddress,
-        uint8 _version,
-        uint256 _contributeWithdrawFee,
-        string[3] memory _otherInfo
-    ) external;
-
-    function initializeVesting(uint256[3] memory _vestingInit) external;
-}
-
-interface IFairPool {
-    function initialize(
-        // uint8 _routerVersion,
-        address[4] memory _addrs,
-        uint256[2] memory _capSettings,
-        uint256[3] memory _timeSettings,
-        uint256[2] memory _feeSettings,
-        uint256[3] memory _auditKRVTokenId,
-        // uint256 _audit,
-        // uint256 _kyc,
-        uint256[2] memory _liquidityPercent,
-        string memory _poolDetails,
-        address[3] memory _linkAddress,
-        uint8 _version,
-        uint256 _feesWithdraw,
-        string[3] memory _otherInfo
-    ) external;
-
-    function initializeVesting(uint256[3] memory _vestingInit) external;
-}
-
-interface IBondingPool {
-    function initialize(
-        address[4] memory _addrs,
-        uint256[2] memory _feeSettings,
-        uint256[4] memory _buySellFeeSettings, //[2] = marketcap settings [3] = target eth to collect on pool ()
-        string memory _poolDetails,
-        address[3] memory _linkAddress,
-        uint8 _version
-    ) external;
-}
-
-interface IBondingToken {
-    function initialize(
-        // uint8 _routerVersion,
-        address initialOwner,
-        string memory name,
-        string memory symbol
-    ) external;
-}
-
-interface IPoolManager {
-    function registerPool(address pool, address token, address owner, uint8 version) external;
-    function registerBondingPool(address pool, address token, address owner, uint8 version) external;
-
-    function addPoolFactory(address factory) external;
-
-    function payAmaPartner(address[] memory _partnerAddress, address _poolAddress) external payable;
-
-    function poolForToken(address token) external view returns (address);
-
-    function isPoolGenerated(address pool) external view returns (bool);
-}
-
-library Clones {
-    /**
-     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
-     *
-     * This function uses the create opcode, which should never revert.
-     */
-    function clone(address implementation) internal returns (address instance) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let ptr := mload(0x40)
-            mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-            mstore(add(ptr, 0x14), shl(0x60, implementation))
-            mstore(add(ptr, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
-            instance := create(0, ptr, 0x37)
-        }
-        require(instance != address(0), "ERC1167: create failed");
-    }
-
-    /**
-     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
-     *
-     * This function uses the create2 opcode and a `salt` to deterministically deploy
-     * the clone. Using the same `implementation` and `salt` multiple time will revert, since
-     * the clones cannot be deployed twice at the same address.
-     */
-    function cloneDeterministic(address implementation, bytes32 salt) internal returns (address instance) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let ptr := mload(0x40)
-            mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-            mstore(add(ptr, 0x14), shl(0x60, implementation))
-            mstore(add(ptr, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
-            instance := create2(0, ptr, 0x37, salt)
-        }
-        require(instance != address(0), "ERC1167: create2 failed");
-    }
-
-    /**
-     * @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
-     */
-    function predictDeterministicAddress(address implementation, bytes32 salt, address deployer)
-        internal
-        pure
-        returns (address predicted)
-    {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let ptr := mload(0x40)
-            mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-            mstore(add(ptr, 0x14), shl(0x60, implementation))
-            mstore(add(ptr, 0x28), 0x5af43d82803e903d91602b57fd5bf3ff00000000000000000000000000000000)
-            mstore(add(ptr, 0x38), shl(0x60, deployer))
-            mstore(add(ptr, 0x4c), salt)
-            mstore(add(ptr, 0x6c), keccak256(ptr, 0x37))
-            predicted := keccak256(add(ptr, 0x37), 0x55)
-        }
-    }
-
-    /**
-     * @dev Computes the address of a clone deployed using {Clones-cloneDeterministic}.
-     */
-    function predictDeterministicAddress(address implementation, bytes32 salt)
-        internal
-        view
-        returns (address predicted)
-    {
-        return predictDeterministicAddress(implementation, salt, address(this));
-    }
-}
+import {IUniswapV2Router01} from "@uniswap/v2-periphery/interfaces/IUniswapV2Router01.sol";
+import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {IPool} from "./interfaces/IPool.sol";
+import {IPrivatePool} from "./interfaces/IPrivatePool.sol";
+import {IFairPool} from "./interfaces/IFairPool.sol";
+import {IBondingPool} from "./interfaces/IBondingPool.sol";
+import {IBondingToken} from "./interfaces/IBondingToken.sol";
+import {IPoolManager} from "./interfaces/IPoolManager.sol";
 
 contract PoolFactory is OwnableUpgradeable {
     address private master;
@@ -238,6 +55,7 @@ contract PoolFactory is OwnableUpgradeable {
         bool _IsEnabled
     ) external initializer {
         __Ownable_init(msg.sender);
+
         master = _master;
         privatemaster = _privatemaster;
         poolManager = _poolmanager;
@@ -302,54 +120,54 @@ contract PoolFactory is OwnableUpgradeable {
         _;
     }
 
-    function initalizeClone(
-        address _pair,
-        address[4] memory _addrs,
-        uint256[16] memory _saleInfo,
-        string memory _poolDetails,
-        uint256[3] memory _vestingInit,
-        string[3] memory _otherInfo
-    ) internal _checkTokeneEligible(_addrs[3], _addrs[0], _addrs[1]) {
-        IPool(_pair).initialize(
-            _addrs,
-            _saleInfo,
-            _poolDetails,
-            [poolOwner, poolManager, adminWallet],
-            version,
-            contributeWithdrawFee,
-            _otherInfo
-        );
+    // function initalizeClone(
+    //     address _pair,
+    //     address[4] memory _addrs,
+    //     uint256[16] memory _saleInfo,
+    //     string memory _poolDetails,
+    //     uint256[3] memory _vestingInit,
+    //     string[3] memory _otherInfo
+    // ) internal _checkTokeneEligible(_addrs[3], _addrs[0], _addrs[1]) {
+    //     IPool(_pair).initialize(
+    //         _addrs,
+    //         _saleInfo,
+    //         _poolDetails,
+    //         [poolOwner, poolManager, adminWallet],
+    //         version,
+    //         contributeWithdrawFee,
+    //         _otherInfo
+    //     );
 
-        IPool(_pair).initializeVesting(_vestingInit);
+    //     IPool(_pair).initializeVesting(_vestingInit);
 
-        address poolForToken = IPoolManager(poolManager).poolForToken(_addrs[0]);
-        require(poolForToken == address(0), "Pool Already Exist!!");
-    }
+    //     address poolForToken = IPoolManager(poolManager).poolForToken(_addrs[0]);
+    //     require(poolForToken == address(0), "Pool Already Exist!!");
+    // }
 
-    function createSale(
-        address[4] memory _addrs,
-        uint256[16] memory _saleInfo,
-        string memory _poolDetails,
-        uint256[3] memory _vestingInit,
-        string[3] memory _otherInfo
-    ) external payable {
-        require(IsEnabled, "Create sale currently on hold , try again after sometime!!");
-        require(master != address(0), "pool address is not set!!");
-        checkfees(_saleInfo[10], _saleInfo[11]);
-        //fees transfer to Admin wallet
-        (bool success,) = adminWallet.call{value: msg.value}("");
-        require(success, "Address: unable to send value, recipient may have reverted");
+    // function createSale(
+    //     address[4] memory _addrs,
+    //     uint256[16] memory _saleInfo,
+    //     string memory _poolDetails,
+    //     uint256[3] memory _vestingInit,
+    //     string[3] memory _otherInfo
+    // ) external payable {
+    //     require(IsEnabled, "Create sale currently on hold , try again after sometime!!");
+    //     require(master != address(0), "pool address is not set!!");
+    //     checkfees(_saleInfo[10], _saleInfo[11]);
+    //     //fees transfer to Admin wallet
+    //     (bool success,) = adminWallet.call{value: msg.value}("");
+    //     require(success, "Address: unable to send value, recipient may have reverted");
 
-        bytes32 salt = keccak256(abi.encodePacked(_poolDetails, block.timestamp));
-        address pair = Clones.cloneDeterministic(master, salt);
-        //Clone Contract
-        initalizeClone(pair, _addrs, _saleInfo, _poolDetails, _vestingInit, _otherInfo);
-        uint256 totalToken = _feesCount(_saleInfo[0], _saleInfo[1], _saleInfo[5], _saleInfo[14], _saleInfo[12]);
-        _safeTransferFromEnsureExactAmount(_addrs[0], address(msg.sender), address(this), totalToken);
-        _transferFromEnsureExactAmount(_addrs[0], pair, totalToken);
-        IPoolManager(poolManager).addPoolFactory(pair);
-        IPoolManager(poolManager).registerPool(pair, _addrs[0], _addrs[2], version);
-    }
+    //     bytes32 salt = keccak256(abi.encodePacked(_poolDetails, block.timestamp));
+    //     address pair = Clones.cloneDeterministic(master, salt);
+    //     //Clone Contract
+    //     initalizeClone(pair, _addrs, _saleInfo, _poolDetails, _vestingInit, _otherInfo);
+    //     uint256 totalToken = _feesCount(_saleInfo[0], _saleInfo[1], _saleInfo[5], _saleInfo[14], _saleInfo[12]);
+    //     _safeTransferFromEnsureExactAmount(_addrs[0], address(msg.sender), address(this), totalToken);
+    //     _transferFromEnsureExactAmount(_addrs[0], pair, totalToken);
+    //     IPoolManager(poolManager).addPoolFactory(pair);
+    //     IPoolManager(poolManager).registerPool(pair, _addrs[0], _addrs[2], version);
+    // }
 
     function initalizePrivateClone(
         address _pair,
@@ -401,7 +219,7 @@ contract PoolFactory is OwnableUpgradeable {
     function initalizeBondingClone(
         // uint8 _routerVersion,
         address _pair,
-        address[4] memory _addrs, //[0] = template token addr, [1] = router, [2] = governance , [3] = ethPriceFeed
+        address[4] memory _addrs, //[0] = new token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = ethPriceFeed
         uint256[2] memory _feeSettings,
         uint256[4] memory _buySellFeeSettings, //[0] = buy Fee, [1] = sell fee, [2] = market cap settings [3] = target eth to collect on pool
         string memory _poolDetails
@@ -417,11 +235,34 @@ contract PoolFactory is OwnableUpgradeable {
         );
     }
 
+    /**
+     * 0	_addrs	address[4]
+     * 0x0000000000000000000000000000000000000000
+     * 0x427bF5b37357632377eCbEC9de3626C71A5396c1
+     * 0x6c8fcDeb117a1d40Cd2c2eB6ECDa58793FD636b1
+     * 0x1A26d803C2e796601794f8C5609549643832702C
+     * 1	_feeSettings	uint256[2]
+     * 0
+     * 5
+     * 2	_buySellFeeSettings	uint256[4]
+     * 1
+     * 1
+     * 69000
+     * 4000000000000000000
+     * 3	_createFeeSettings	uint256[2]
+     * 100000000000000
+     * 200000000000000
+     * 4	_poolDetails	string
+     * LOGOURL$#$https://defilaunch.app/static/media/PumpIcon.d9a917d5b3bd578904166bed70e68616.svg$#$https://git.app/static/media/Pum$#$$#$$#$$#$$#$$#$$#$$#$$#$$#$DSCRIPTION
+     * 5	tokenInfo	string[2]
+     * Name
+     * NMS
+     */
     function createBondingToken(
-        address[4] memory _addrs, //[0] = template token addr, [1] = router, [2] = governance , [3] = ethPriceFeed
+        address[4] memory _addrs, //[0] = template token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = ethPriceFeed
         uint256[2] memory _feeSettings, // [0] = is for token fee when finish time, [1] = eth fee when finish time
         uint256[4] memory _buySellFeeSettings, // [2] = market cap settings [3] = targetEth to collect
-        uint256[2] memory _createFeeSettings, // [0] = creation fee, [1] = eth amount to bonding pool
+        uint256[2] memory _createFeeSettings, // [0] = creation fee, [1] = eth amount to bonding pool //@audit-issue they should not be passing this manually
         string memory _poolDetails,
         string[2] memory tokenInfo //[0] = name, [1] = symbol
     ) external payable {
@@ -431,7 +272,7 @@ contract PoolFactory is OwnableUpgradeable {
         (bool success,) = adminWallet.call{value: _createFeeSettings[0]}("");
         require(success, "Address: unable to send value, recipient may have reverted");
         bytes32 salt = keccak256(abi.encodePacked(_poolDetails, block.timestamp));
-        address pair = Clones.cloneDeterministic(bondingPool, salt);
+        address pair = Clones.cloneDeterministic(bondingPool, salt); //@note new cloned bonding pool
         salt = keccak256(abi.encodePacked(tokenInfo[0], block.timestamp));
         _addrs[0] = Clones.cloneDeterministic(bondingToken, salt); //token address
         IBondingToken(_addrs[0]).initialize(pair, tokenInfo[0], tokenInfo[1]);
@@ -513,7 +354,7 @@ contract PoolFactory is OwnableUpgradeable {
         require(fairmaster != address(0), "pool address is not set!!");
         fairFees(_auditKRVTokenId[1], _auditKRVTokenId[0]);
 
-        (bool success,) = adminWallet.call{value: msg.value}("");
+        (bool success,) = adminWallet.call{value: msg.value}(""); //@audit-issue The amount should be in the contract
         require(success, "Address: unable to send value, recipient may have reverted");
 
         bytes32 salt = keccak256(abi.encodePacked(_poolDetails, block.timestamp));
