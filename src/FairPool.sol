@@ -3,10 +3,11 @@ pragma solidity ^0.8.4;
 
 library AddressUpgradeable {
     function isContract(address account) internal view returns (bool) {
-        
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 
@@ -14,16 +15,18 @@ library AddressUpgradeable {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCall(target, data, "Address: low-level call failed");
     }
 
-    
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -31,12 +34,15 @@ library AddressUpgradeable {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
@@ -44,7 +50,11 @@ library AddressUpgradeable {
         return functionStaticCall(target, data, "Address: low-level static call failed");
     }
 
-    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        view
+        returns (bytes memory)
+    {
         require(isContract(target), "Address: static call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
@@ -52,7 +62,11 @@ library AddressUpgradeable {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage)
+        private
+        pure
+        returns (bytes memory)
+    {
         if (success) {
             return returndata;
         } else {
@@ -73,7 +87,6 @@ library AddressUpgradeable {
 }
 
 abstract contract Initializable {
-
     /**
      * @dev Indicates that the contract has been initialized.
      */
@@ -183,6 +196,7 @@ abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
     }
+
     uint256[49] private __gap;
 }
 
@@ -242,7 +256,6 @@ interface IERC20 {
      */
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
- 
     function decimals() external view returns (uint8);
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
@@ -461,7 +474,6 @@ library SafeMath {
 }
 
 library Address {
-    
     function isContract(address account) internal view returns (bool) {
         // This method relies on extcodesize, which returns 0 for contracts in
         // construction, since the code is only stored at the end of the
@@ -469,26 +481,28 @@ library Address {
 
         uint256 size;
         // solhint-disable-next-line no-inline-assembly
-        assembly { size := extcodesize(account) }
+        assembly {
+            size := extcodesize(account)
+        }
         return size > 0;
     }
 
-    
     function sendValue(address payable recipient, uint256 amount) internal {
         require(address(this).balance >= amount, "Address: insufficient balance");
 
         // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
-        (bool success, ) = recipient.call{ value: amount }("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, "Address: unable to send value, recipient may have reverted");
     }
 
-   
     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
-      return functionCall(target, data, "Address: low-level call failed");
+        return functionCall(target, data, "Address: low-level call failed");
     }
 
-    
-    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         return functionCallWithValue(target, data, 0, errorMessage);
     }
 
@@ -496,22 +510,27 @@ library Address {
         return functionCallWithValue(target, data, value, "Address: low-level call with value failed");
     }
 
-    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         require(address(this).balance >= value, "Address: insufficient balance for call");
         require(isContract(target), "Address: call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
-        (bool success, bytes memory returndata) = target.call{ value: value }(data);
+        (bool success, bytes memory returndata) = target.call{value: value}(data);
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-   
     function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {
         return functionStaticCall(target, data, "Address: low-level static call failed");
     }
 
-    
-    function functionStaticCall(address target, bytes memory data, string memory errorMessage) internal view returns (bytes memory) {
+    function functionStaticCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        view
+        returns (bytes memory)
+    {
         require(isContract(target), "Address: static call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
@@ -519,13 +538,14 @@ library Address {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-    
     function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
         return functionDelegateCall(target, data, "Address: low-level delegate call failed");
     }
 
-    
-    function functionDelegateCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+    function functionDelegateCall(address target, bytes memory data, string memory errorMessage)
+        internal
+        returns (bytes memory)
+    {
         require(isContract(target), "Address: delegate call to non-contract");
 
         // solhint-disable-next-line avoid-low-level-calls
@@ -533,7 +553,11 @@ library Address {
         return _verifyCallResult(success, returndata, errorMessage);
     }
 
-    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage) private pure returns(bytes memory) {
+    function _verifyCallResult(bool success, bytes memory returndata, string memory errorMessage)
+        private
+        pure
+        returns (bytes memory)
+    {
         if (success) {
             return returndata;
         } else {
@@ -565,13 +589,13 @@ library SafeERC20 {
         _callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
     }
 
-
     function safeApprove(IERC20 token, address spender, uint256 value) internal {
         // safeApprove should only be called when setting an initial allowance,
         // or when resetting it to zero. To increase and decrease it, use
         // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
         // solhint-disable-next-line max-line-length
-        require((value == 0) || (token.allowance(address(this), spender) == 0),
+        require(
+            (value == 0) || (token.allowance(address(this), spender) == 0),
             "SafeERC20: approve from non-zero to non-zero allowance"
         );
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value));
@@ -583,18 +607,19 @@ library SafeERC20 {
     }
 
     function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {
-        uint256 newAllowance = token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
+        uint256 newAllowance =
+            token.allowance(address(this), spender).sub(value, "SafeERC20: decreased allowance below zero");
         _callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance));
     }
 
-   
     function _callOptionalReturn(IERC20 token, bytes memory data) private {
         // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
         // we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
         // the target address contains contract code and also asserts for success in the low-level call.
 
         bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed");
-        if (returndata.length > 0) { // Return data is optional
+        if (returndata.length > 0) {
+            // Return data is optional
             // solhint-disable-next-line max-line-length
             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
         }
@@ -602,17 +627,14 @@ library SafeERC20 {
 }
 
 library EnumerableSet {
-    
     struct Set {
         // Storage of set values
         bytes32[] _values;
-
         // Position of the value in the `values` array, plus 1 because index 0
         // means a value is not in the set.
-        mapping (bytes32 => uint256) _indexes;
+        mapping(bytes32 => uint256) _indexes;
     }
 
-    
     function _add(Set storage set, bytes32 value) private returns (bool) {
         if (!_contains(set, value)) {
             set._values.push(value);
@@ -625,12 +647,12 @@ library EnumerableSet {
         }
     }
 
-   
     function _remove(Set storage set, bytes32 value) private returns (bool) {
         // We read and store the value's index to prevent multiple reads from the same storage slot
         uint256 valueIndex = set._indexes[value];
 
-        if (valueIndex != 0) { // Equivalent to contains(set, value)
+        if (valueIndex != 0) {
+            // Equivalent to contains(set, value)
             // To delete an element from the _values array in O(1), we swap the element to delete with the last one in
             // the array, and then remove the last element (sometimes called as 'swap and pop').
             // This modifies the order of the array, as noted in {at}.
@@ -674,16 +696,16 @@ library EnumerableSet {
         return set._values.length;
     }
 
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
+    /**
+     * @dev Returns the value stored at position `index` in the set. O(1).
+     *
+     * Note that there are no guarantees on the ordering of values inside the
+     * array, and it may change when more values are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
     function _at(Set storage set, uint256 index) private view returns (bytes32) {
         require(set._values.length > index, "EnumerableSet: index out of bounds");
         return set._values[index];
@@ -729,16 +751,16 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
+    /**
+     * @dev Returns the value stored at position `index` in the set. O(1).
+     *
+     * Note that there are no guarantees on the ordering of values inside the
+     * array, and it may change when more values are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
     function at(Bytes32Set storage set, uint256 index) internal view returns (bytes32) {
         return _at(set._inner, index);
     }
@@ -783,20 +805,19 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
+    /**
+     * @dev Returns the value stored at position `index` in the set. O(1).
+     *
+     * Note that there are no guarantees on the ordering of values inside the
+     * array, and it may change when more values are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
     function at(AddressSet storage set, uint256 index) internal view returns (address) {
         return address(uint160(uint256(_at(set._inner, index))));
     }
-
 
     // UintSet
 
@@ -838,16 +859,16 @@ library EnumerableSet {
         return _length(set._inner);
     }
 
-   /**
-    * @dev Returns the value stored at position `index` in the set. O(1).
-    *
-    * Note that there are no guarantees on the ordering of values inside the
-    * array, and it may change when more values are added or removed.
-    *
-    * Requirements:
-    *
-    * - `index` must be strictly less than {length}.
-    */
+    /**
+     * @dev Returns the value stored at position `index` in the set. O(1).
+     *
+     * Note that there are no guarantees on the ordering of values inside the
+     * array, and it may change when more values are added or removed.
+     *
+     * Requirements:
+     *
+     * - `index` must be strictly less than {length}.
+     */
     function at(UintSet storage set, uint256 index) internal view returns (uint256) {
         return uint256(_at(set._inner, index));
     }
@@ -867,13 +888,7 @@ interface IUniswapV2Router01 {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    )
-        external
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        );
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     function addLiquidityETH(
         address token,
@@ -882,14 +897,7 @@ interface IUniswapV2Router01 {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        returns (
-            uint256 amountToken,
-            uint256 amountETH,
-            uint256 liquidity
-        );
+    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
     function removeLiquidity(
         address tokenA,
@@ -953,12 +961,10 @@ interface IUniswapV2Router01 {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapExactETHForTokens(
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amounts);
 
     function swapTokensForExactETH(
         uint256 amountOut,
@@ -976,30 +982,22 @@ interface IUniswapV2Router01 {
         uint256 deadline
     ) external returns (uint256[] memory amounts);
 
-    function swapETHForExactTokens(
-        uint256 amountOut,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amounts);
 
-    function quote(
-        uint256 amountA,
-        uint256 reserveA,
-        uint256 reserveB
-    ) external pure returns (uint256 amountB);
+    function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) external pure returns (uint256 amountB);
 
-    function getAmountOut(
-        uint256 amountIn,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountOut);
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
+        external
+        pure
+        returns (uint256 amountOut);
 
-    function getAmountIn(
-        uint256 amountOut,
-        uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountIn);
+    function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
+        external
+        pure
+        returns (uint256 amountIn);
 
     function getAmountsOut(uint256 amountIn, address[] calldata path)
         external
@@ -1060,29 +1058,19 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 interface IUniswapV2Factory {
-    event PairCreated(
-        address indexed token0,
-        address indexed token1,
-        address pair,
-        uint256
-    );
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
 
     function feeTo() external view returns (address);
 
     function feeToSetter() external view returns (address);
 
-    function getPair(address tokenA, address tokenB)
-        external
-        view
-        returns (address pair);
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
 
     function allPairs(uint256) external view returns (address pair);
 
     function allPairsLength() external view returns (uint256);
 
-    function createPair(address tokenA, address tokenB)
-        external
-        returns (address pair);
+    function createPair(address tokenA, address tokenB) external returns (address pair);
 
     function setFeeTo(address) external;
 
@@ -1090,103 +1078,99 @@ interface IUniswapV2Factory {
 }
 
 interface IPoolFactory {
-  function increaseTotalValueLocked(address currency, uint256 value) external;
-  function decreaseTotalValueLocked(address currency, uint256 value) external;
-  function removePoolForToken(address token, address pool) external;
-  function recordContribution(address user, address pool) external;
-  function addTopPool(address poolAddress, address currency, uint256 raisedAmount) external;
-  function removeTopPool(address poolAddress) external;
-  
-  event TvlChanged(address currency, uint256 totalLocked, uint256 totalRaised);
-  event ContributionUpdated(uint256 totalParticipations);
-  event PoolForTokenRemoved(address indexed token, address pool);
+    function increaseTotalValueLocked(address currency, uint256 value) external;
+    function decreaseTotalValueLocked(address currency, uint256 value) external;
+    function removePoolForToken(address token, address pool) external;
+    function recordContribution(address user, address pool) external;
+    function addTopPool(address poolAddress, address currency, uint256 raisedAmount) external;
+    function removeTopPool(address poolAddress) external;
+
+    event TvlChanged(address currency, uint256 totalLocked, uint256 totalRaised);
+    event ContributionUpdated(uint256 totalParticipations);
+    event PoolForTokenRemoved(address indexed token, address pool);
 }
 
 interface IPool {
     function initialize(
         // uint8 _routerVersion,
         address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = Authority, [4] = currency
-        uint256[2] memory _capSettings, 
-        uint256[3] memory _timeSettings, 
-        uint256[2] memory _feeSettings, 
+        uint256[2] memory _capSettings,
+        uint256[3] memory _timeSettings,
+        uint256[2] memory _feeSettings,
         uint256[3] memory _auditKRVTokenId, //[0] = audit, [1] = kyc, [2] = routerVersion
         // uint256 _audit,
         // uint256 _kyc,
-        uint256[2] memory _liquidityPercent, 
+        uint256[2] memory _liquidityPercent,
         string memory _poolDetails,
-        address[3] memory _linkAddress, // [0] factory ,[1] = manager 
+        address[3] memory _linkAddress, // [0] factory ,[1] = manager
         uint8 _version,
         uint256 _feesWithdraw,
         string[3] memory _otherInfo
     ) external;
 
-    function setKycAudit(bool _kyc , bool _audit , string memory _kyclink,string memory _auditlink) external;
+    function setKycAudit(bool _kyc, bool _audit, string memory _kyclink, string memory _auditlink) external;
     function emergencyWithdrawLiquidity() external;
     function emergencyWithdraw(address payable to_, uint256 amount_) external;
     function setGovernance(address governance_) external;
-    function emergencyWithdrawToken( address payaddress ,address tokenAddress, uint256 tokens ) external;
-    function getPoolInfo() external view returns (address, address, uint8[] memory , uint256[] memory , string memory , string memory , string memory, uint256, uint256, address);
-
+    function emergencyWithdrawToken(address payaddress, address tokenAddress, uint256 tokens) external;
+    function getPoolInfo()
+        external
+        view
+        returns (
+            address,
+            address,
+            uint8[] memory,
+            uint256[] memory,
+            string memory,
+            string memory,
+            string memory,
+            uint256,
+            uint256,
+            address
+        );
 }
 
 library PoolLibrary {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
 
-  
-  function convertCurrencyToToken(
-    uint256 amount, 
-    uint256 rate
-  ) internal pure returns (uint256) {
-    return amount.mul(rate).div(1e18);
-  }
-
-
-  function addLiquidity(
-    address router,
-    address currency,
-    address token,
-    uint256 liquidityEth,
-    uint256 liquidityToken,
-    address pool
-  ) internal returns (uint256 liquidity) {
-    IERC20(token).approve(router, liquidityToken);
-
-    if(currency == address(0)) {
-        (,, liquidity) = IUniswapV2Router02(router).addLiquidityETH{value: liquidityEth}(
-            token,
-            liquidityToken,
-            0,
-            0,
-            pool,
-            block.timestamp
-        );
-    } else {
-        (,, liquidity) = IUniswapV2Router02(router).addLiquidity(
-            token,
-            currency,
-            liquidityToken,
-            liquidityEth,
-            0,
-            0,
-            pool,
-            block.timestamp
-        );
+    function convertCurrencyToToken(uint256 amount, uint256 rate) internal pure returns (uint256) {
+        return amount.mul(rate).div(1e18);
     }
-  }
 
-  function calculateFeeAndLiquidity(
-    uint256 totalRaised,
-    uint256 ethFeePercent,
-    uint256 tokenFeePercent,
-    uint256 totalVolumePurchased,
-    uint256 liquidityPercent,
-    uint256 liquidityListingRate
-  ) internal pure returns (uint256 ethFee, uint256 tokenFee, uint256 liquidityEth, uint256 liquidityToken) {
-    ethFee = totalRaised.mul(ethFeePercent).div(100);
-    tokenFee = totalVolumePurchased.mul(tokenFeePercent).div(100);
-    liquidityEth = totalRaised.sub(ethFee).mul(liquidityPercent).div(100);
-    liquidityToken = liquidityEth.mul(liquidityListingRate).div(1e18);
-  }
+    function addLiquidity(
+        address router,
+        address currency,
+        address token,
+        uint256 liquidityEth,
+        uint256 liquidityToken,
+        address pool
+    ) internal returns (uint256 liquidity) {
+        IERC20(token).approve(router, liquidityToken);
+
+        if (currency == address(0)) {
+            (,, liquidity) = IUniswapV2Router02(router).addLiquidityETH{value: liquidityEth}(
+                token, liquidityToken, 0, 0, pool, block.timestamp
+            );
+        } else {
+            (,, liquidity) = IUniswapV2Router02(router).addLiquidity(
+                token, currency, liquidityToken, liquidityEth, 0, 0, pool, block.timestamp
+            );
+        }
+    }
+
+    function calculateFeeAndLiquidity(
+        uint256 totalRaised,
+        uint256 ethFeePercent,
+        uint256 tokenFeePercent,
+        uint256 totalVolumePurchased,
+        uint256 liquidityPercent,
+        uint256 liquidityListingRate
+    ) internal pure returns (uint256 ethFee, uint256 tokenFee, uint256 liquidityEth, uint256 liquidityToken) {
+        ethFee = totalRaised.mul(ethFeePercent).div(100);
+        tokenFee = totalVolumePurchased.mul(tokenFeePercent).div(100);
+        liquidityEth = totalRaised.sub(ethFee).mul(liquidityPercent).div(100);
+        liquidityToken = liquidityEth.mul(liquidityListingRate).div(1e18);
+    }
 }
 
 contract ReEntrancyGuard {
@@ -1204,8 +1188,8 @@ contract ReEntrancyGuard {
 
 interface IWETH {
     function deposit() external payable;
-    function transfer(address to, uint value) external returns (bool);
-    function withdraw(uint) external;
+    function transfer(address to, uint256 value) external returns (bool);
+    function withdraw(uint256) external;
 }
 
 pragma solidity ^0.8.20;
@@ -1226,12 +1210,9 @@ interface IERC721Receiver {
      *
      * The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.
      */
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4);
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4);
 }
 
 pragma solidity ^0.8.20;
@@ -1261,6 +1242,7 @@ pragma solidity ^0.8.20;
 /**
  * @dev Required interface of an ERC-721 compliant contract.
  */
+
 interface IERC721 is IERC165 {
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
@@ -1387,7 +1369,6 @@ interface IERC721 is IERC165 {
     function isApprovedForAll(address owner, address operator) external view returns (bool);
 }
 
-
 pragma solidity ^0.8.20;
 
 /**
@@ -1450,12 +1431,10 @@ interface IPoolInitializer {
     /// @param fee The fee amount of the v3 pool for the specified token pair
     /// @param sqrtPriceX96 The initial square root price of the pool as a Q64.96 value
     /// @return pool Returns the pool address based on the pair of tokens and fee, will return the newly created pool address if necessary
-    function createAndInitializePoolIfNecessary(
-        address token0,
-        address token1,
-        uint24 fee,
-        uint160 sqrtPriceX96
-    ) external payable returns (address pool);
+    function createAndInitializePoolIfNecessary(address token0, address token1, uint24 fee, uint160 sqrtPriceX96)
+        external
+        payable
+        returns (address pool);
 }
 
 pragma solidity >=0.7.5;
@@ -1478,14 +1457,9 @@ interface IERC721Permit is IERC721 {
     /// @param v Must produce valid secp256k1 signature from the holder along with `r` and `s`
     /// @param r Must produce valid secp256k1 signature from the holder along with `v` and `s`
     /// @param s Must produce valid secp256k1 signature from the holder along with `r` and `v`
-    function permit(
-        address spender,
-        uint256 tokenId,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external payable;
+    function permit(address spender, uint256 tokenId, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+        payable;
 }
 
 pragma solidity >=0.7.5;
@@ -1509,11 +1483,7 @@ interface IPeripheryPayments {
     /// @param token The contract address of the token which will be transferred to `recipient`
     /// @param amountMinimum The minimum amount of token required for a transfer
     /// @param recipient The destination address of the token
-    function sweepToken(
-        address token,
-        uint256 amountMinimum,
-        address recipient
-    ) external payable;
+    function sweepToken(address token, uint256 amountMinimum, address recipient) external payable;
 }
 
 pragma solidity >=0.5.0;
@@ -1527,7 +1497,6 @@ interface IPeripheryImmutableState {
     /// @return Returns the address of WETH9
     function WETH9() external view returns (address);
 }
-
 
 pragma solidity >=0.7.5;
 
@@ -1621,12 +1590,7 @@ interface INonfungiblePositionManager is
     function mint(MintParams calldata params)
         external
         payable
-        returns (
-            uint256 tokenId,
-            uint128 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        );
+        returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1);
 
     struct IncreaseLiquidityParams {
         uint256 tokenId;
@@ -1650,11 +1614,7 @@ interface INonfungiblePositionManager is
     function increaseLiquidity(IncreaseLiquidityParams calldata params)
         external
         payable
-        returns (
-            uint128 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        );
+        returns (uint128 liquidity, uint256 amount0, uint256 amount1);
 
     struct DecreaseLiquidityParams {
         uint256 tokenId;
@@ -1752,6 +1712,7 @@ library Panic {
         }
     }
 }
+
 pragma solidity ^0.8.20;
 
 /**
@@ -2923,6 +2884,7 @@ library Math {
         Ceil, // Toward positive infinity
         Trunc, // Toward zero
         Expand // Away from zero
+
     }
 
     /**
@@ -3268,11 +3230,11 @@ library Math {
     /**
      * @dev Variant of {tryModExp} that supports inputs of arbitrary length.
      */
-    function tryModExp(
-        bytes memory b,
-        bytes memory e,
-        bytes memory m
-    ) internal view returns (bool success, bytes memory result) {
+    function tryModExp(bytes memory b, bytes memory e, bytes memory m)
+        internal
+        view
+        returns (bool success, bytes memory result)
+    {
         if (_zeroBytes(m)) return (false, new bytes(0));
 
         uint256 mLen = m.length;
@@ -3596,31 +3558,29 @@ interface IUniswapV3Pair {
     function tickSpacing() external view returns (int24);
 }
 
-contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receiver {
+contract FairPool is OwnableUpgradeable, IPool, ReEntrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Address for address payable;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint8 public VERSION;
-    uint public MINIMUM_LOCK_DAYS;
-    uint256 public feesWithdraw; 
-    
+    uint256 public MINIMUM_LOCK_DAYS;
+    uint256 public feesWithdraw;
 
-    struct poolInfo{
+    struct poolInfo {
         address currency;
-        address token; 
+        address token;
         uint256 startTime;
-        uint256  endTime;
-        uint256  totalRaised;
-        uint256 softCap; 
-        uint8 poolState; 
-        uint8 poolType; 
+        uint256 endTime;
+        uint256 totalRaised;
+        uint256 softCap;
+        uint8 poolState;
+        uint8 poolType;
         uint256 rate;
         uint256 liquidityPercent;
         uint256 liquidityUnlockTime;
-    } 
-    
+    }
 
     enum PoolState {
         inUse,
@@ -3633,6 +3593,7 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
         privatesale,
         fairsale
     }
+
     uint256 public routerVersion;
     uint256 public tokenId;
     address public v3Pair;
@@ -3640,7 +3601,7 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
     address public router;
     address public governance;
     address payable private adminWallet;
-    
+
     address public currency;
     address public token;
     uint256 public rate;
@@ -3689,13 +3650,8 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
     mapping(address => uint256) public purchasedOf;
     mapping(address => uint256) public claimedOf;
     mapping(address => uint256) public refundedOf;
-   
 
-    event Contributed(
-        address indexed user,
-        uint256 amount,
-        uint256 timestamp
-    );
+    event Contributed(address indexed user, uint256 amount, uint256 timestamp);
 
     event WithdrawnContribution(address indexed user, uint256 amount);
 
@@ -3711,14 +3667,13 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
 
     event LiquidityWithdrawn(uint256 amount, uint256 timestamp);
 
-    
     modifier inProgress() {
         require(poolState == PoolState.inUse, "Pool is either completed or cancelled");
         require(block.timestamp >= startTime && block.timestamp < endTime, "It's not time to buy");
         _;
     }
 
-   modifier onlyOperator() {
+    modifier onlyOperator() {
         require(msg.sender == owner() || msg.sender == governance, "Only operator");
         _;
     }
@@ -3727,6 +3682,7 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
         require(msg.sender == governance, "Only governance");
         _;
     }
+
     modifier onlyAdmin() {
         require(msg.sender == adminWallet, "Only admin");
         _;
@@ -3739,15 +3695,15 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
     // function initialize(
     //     // uint8 _routerVersion,
     //     address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = currency
-    //     uint256[2] memory _capSettings, 
-    //     uint256[3] memory _timeSettings, 
+    //     uint256[2] memory _capSettings,
+    //     uint256[3] memory _timeSettings,
     //     uint256[2] memory _feeSettings,
     //     uint256[3] memory _auditKRVTokenId, //[0] = audit, [1] = kyc, [2] = routerVersion
     //     // uint256 _audit,
     //     // uint256 _kyc,
-    //     uint256[2] memory _liquidityPercent, 
+    //     uint256[2] memory _liquidityPercent,
     //     string memory _poolDetails,
-    //     address[3] memory _linkAddress, // [0] factory ,[1] = manager 
+    //     address[3] memory _linkAddress, // [0] factory ,[1] = manager
     //     uint8 _version,
     //     uint256 _feesWithdraw,
     //     string[3] memory _otherInfo
@@ -3765,7 +3721,7 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
     //         _feeSettings[1] <= 100,
     //         "Invalid fee settings. Must be percentage (0 -> 100)"
     //     );
-        
+
     //     require(_liquidityPercent[0] >= 51 && _liquidityPercent[0] <= 100, "Invalid liquidity percentage");
     //     require(_liquidityPercent[1] == 0 || _liquidityPercent[1] == 1, "Refund type must be 0 (refund) or 1 (burn)");
     //     OwnableUpgradeable.__Ownable_init();
@@ -3800,156 +3756,176 @@ contract FairPool is OwnableUpgradeable, IPool , ReEntrancyGuard, IERC721Receive
     // }
 
     function initialize(
-    address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = currency
-    uint256[2] memory _capSettings, 
-    uint256[3] memory _timeSettings, 
-    uint256[2] memory _feeSettings,
-    uint256[3] memory _auditKRVTokenId,  //[0] = audit, [1] = kyc, [2] = routerVersion
-    uint256[2] memory _liquidityPercent, 
-    string memory _poolDetails,
-    address[3] memory _linkAddress, // [0] factory ,[1] = manager 
-    uint8 _version,
-    uint256 _feesWithdraw,
-    string[3] memory _otherInfo
-) external override initializer {
-    require(factory == address(0), "Pool: Forbidden");
-    _validateInputs(_addrs, _capSettings, _timeSettings, _feeSettings, _liquidityPercent);
+        address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = currency
+        uint256[2] memory _capSettings,
+        uint256[3] memory _timeSettings,
+        uint256[2] memory _feeSettings,
+        uint256[3] memory _auditKRVTokenId, //[0] = audit, [1] = kyc, [2] = routerVersion
+        uint256[2] memory _liquidityPercent,
+        string memory _poolDetails,
+        address[3] memory _linkAddress, // [0] factory ,[1] = manager
+        uint8 _version,
+        uint256 _feesWithdraw,
+        string[3] memory _otherInfo
+    ) external override initializer {
+        require(factory == address(0), "Pool: Forbidden");
+        _validateInputs(_addrs, _capSettings, _timeSettings, _feeSettings, _liquidityPercent);
 
-    OwnableUpgradeable.__Ownable_init();
-    _initializeAddresses(_addrs, _linkAddress);
-    _initializeSettings(_capSettings, _timeSettings, _feeSettings, _auditKRVTokenId, _liquidityPercent);
+        OwnableUpgradeable.__Ownable_init();
+        _initializeAddresses(_addrs, _linkAddress);
+        _initializeSettings(_capSettings, _timeSettings, _feeSettings, _auditKRVTokenId, _liquidityPercent);
 
-    poolDetails = _poolDetails;
-    VERSION = _version;
-    feesWithdraw = _feesWithdraw;
-    auditLink = _otherInfo[0];
-    kycLink = _otherInfo[1];
-    ownerMail = _otherInfo[2];
-    poolType = PoolType.fairsale;
-    poolState = PoolState.inUse;
-    MINIMUM_LOCK_DAYS = 5 minutes;
-}
+        poolDetails = _poolDetails;
+        VERSION = _version;
+        feesWithdraw = _feesWithdraw;
+        auditLink = _otherInfo[0];
+        kycLink = _otherInfo[1];
+        ownerMail = _otherInfo[2];
+        poolType = PoolType.fairsale;
+        poolState = PoolState.inUse;
+        MINIMUM_LOCK_DAYS = 5 minutes;
+    }
 
-function _validateInputs(
-    address[4] memory _addrs,
-    uint256[2] memory _capSettings,
-    uint256[3] memory _timeSettings,
-    uint256[2] memory _feeSettings,
-    uint256[2] memory _liquidityPercent
-) internal view {
-    require(_addrs[0] != address(0), "Invalid Token address");
-    require(_capSettings[0] > 0 , "Softcap must be >= 0");
-    require(_timeSettings[0] < _timeSettings[1], "End time must be after start time");
-    require(_timeSettings[2] >= MINIMUM_LOCK_DAYS, "Liquidity unlock time must be at least 1 Mintues after pool is finalized");
-    require(
-        _feeSettings[0] <= 100 &&
-        _feeSettings[1] <= 100,
-        "Invalid fee settings. Must be percentage (0 -> 100)"
-    );
-    require(_liquidityPercent[0] >= 51 && _liquidityPercent[0] <= 100, "Invalid liquidity percentage");
-    require(_liquidityPercent[1] == 0 || _liquidityPercent[1] == 1, "Refund type must be 0 (refund) or 1 (burn)");
-}
+    function _validateInputs(
+        address[4] memory _addrs,
+        uint256[2] memory _capSettings,
+        uint256[3] memory _timeSettings,
+        uint256[2] memory _feeSettings,
+        uint256[2] memory _liquidityPercent
+    ) internal view {
+        require(_addrs[0] != address(0), "Invalid Token address");
+        require(_capSettings[0] > 0, "Softcap must be >= 0");
+        require(_timeSettings[0] < _timeSettings[1], "End time must be after start time");
+        require(
+            _timeSettings[2] >= MINIMUM_LOCK_DAYS,
+            "Liquidity unlock time must be at least 1 Mintues after pool is finalized"
+        );
+        require(_feeSettings[0] <= 100 && _feeSettings[1] <= 100, "Invalid fee settings. Must be percentage (0 -> 100)");
+        require(_liquidityPercent[0] >= 51 && _liquidityPercent[0] <= 100, "Invalid liquidity percentage");
+        require(_liquidityPercent[1] == 0 || _liquidityPercent[1] == 1, "Refund type must be 0 (refund) or 1 (burn)");
+    }
 
-function _initializeAddresses(address[4] memory _addrs, address[3] memory _linkAddress) internal {
-    transferOwnership(_linkAddress[0]);
-    factory = _linkAddress[1];
-    adminWallet = payable(_linkAddress[2]);
-    token = _addrs[0];
-    router = _addrs[1];
-    governance = _addrs[2];
-    currency = _addrs[3];
-}
+    function _initializeAddresses(address[4] memory _addrs, address[3] memory _linkAddress) internal {
+        transferOwnership(_linkAddress[0]);
+        factory = _linkAddress[1];
+        adminWallet = payable(_linkAddress[2]);
+        token = _addrs[0];
+        router = _addrs[1];
+        governance = _addrs[2];
+        currency = _addrs[3];
+    }
 
-function _initializeSettings(
-    uint256[2] memory _capSettings,
-    uint256[3] memory _timeSettings,
-    uint256[2] memory _feeSettings,
-    uint256[3] memory _auditKRVTokenId,
-    uint256[2] memory _liquidityPercent
-) internal {
-    softCap = _capSettings[0];
-    totalToken = _capSettings[1];
-    startTime = _timeSettings[0];
-    endTime = _timeSettings[1];
-    liquidityLockDays = _timeSettings[2];
-    tokenFeePercent = _feeSettings[0];
-    ethFeePercent = _feeSettings[1];
-    audit = _auditKRVTokenId[0] == 1;
-    kyc = _auditKRVTokenId[1] == 1;
-    routerVersion = _auditKRVTokenId[2];
-    liquidityPercent = _liquidityPercent[0];
-    refundType = _liquidityPercent[1];
-}
+    function _initializeSettings(
+        uint256[2] memory _capSettings,
+        uint256[3] memory _timeSettings,
+        uint256[2] memory _feeSettings,
+        uint256[3] memory _auditKRVTokenId,
+        uint256[2] memory _liquidityPercent
+    ) internal {
+        softCap = _capSettings[0];
+        totalToken = _capSettings[1];
+        startTime = _timeSettings[0];
+        endTime = _timeSettings[1];
+        liquidityLockDays = _timeSettings[2];
+        tokenFeePercent = _feeSettings[0];
+        ethFeePercent = _feeSettings[1];
+        audit = _auditKRVTokenId[0] == 1;
+        kyc = _auditKRVTokenId[1] == 1;
+        routerVersion = _auditKRVTokenId[2];
+        liquidityPercent = _liquidityPercent[0];
+        refundType = _liquidityPercent[1];
+    }
 
-
-    function getDecimal() public view returns(uint8){
+    function getDecimal() public view returns (uint8) {
         uint8 decimals = IERC20(token).decimals();
         return decimals;
     }
 
     // last 3 is routerVersion, tokenId, pair addr
-    function getPoolInfo() external override view returns (address, address, uint8[] memory , uint256[] memory , string memory , string memory , string memory, uint256, uint256, address){
-       
+    function getPoolInfo()
+        external
+        view
+        override
+        returns (
+            address,
+            address,
+            uint8[] memory,
+            uint256[] memory,
+            string memory,
+            string memory,
+            string memory,
+            uint256,
+            uint256,
+            address
+        )
+    {
         uint8[] memory state = new uint8[](3);
         uint256[] memory info = new uint256[](11);
-        
+
         state[0] = uint8(poolState);
         state[1] = uint8(poolType);
         state[2] = IERC20(token).decimals();
         info[0] = startTime;
-        info[1] =  endTime;
-        info[2] =  totalRaised;
-        info[3] = kycStatus==true? 1: 0; 
-        info[4] = softCap; 
-        info[5] = kyc==true? 1: 0; 
-        info[6] = audit==true? 1: 0;
+        info[1] = endTime;
+        info[2] = totalRaised;
+        info[3] = kycStatus == true ? 1 : 0;
+        info[4] = softCap;
+        info[5] = kyc == true ? 1 : 0;
+        info[6] = audit == true ? 1 : 0;
         info[7] = rate;
-        info[8] = auditStatus==true? 1: 0;
+        info[8] = auditStatus == true ? 1 : 0;
         info[9] = liquidityPercent;
         info[10] = liquidityUnlockTime;
 
-
-       return (token , currency, state , info , IERC20(token).name() , IERC20(token).symbol() , poolDetails, routerVersion, tokenId, v3Pair);
+        return (
+            token,
+            currency,
+            state,
+            info,
+            IERC20(token).name(),
+            IERC20(token).symbol(),
+            poolDetails,
+            routerVersion,
+            tokenId,
+            v3Pair
+        );
     }
 
-
-    function contribute(uint256 _amount) public payable inProgress{
+    function contribute(uint256 _amount) public payable inProgress {
         uint256 amount = currency == address(0) ? msg.value : _amount;
         require(amount > 0, "Cant contribute 0");
-        
-        if(currency != address(0))
+
+        if (currency != address(0)) {
             IERC20(currency).safeTransferFrom(msg.sender, address(this), amount);
+        }
 
         uint256 userTotalContribution = contributionOf[msg.sender].add(amount);
-        
+
         if (contributionOf[msg.sender] == 0) {
             IPoolFactory(factory).recordContribution(msg.sender, address(this));
         }
-        
+
         contributionOf[msg.sender] = userTotalContribution;
         totalRaised = totalRaised.add(amount);
-        
+
         IPoolFactory(factory).addTopPool(address(this), currency, totalRaised);
         emit Contributed(msg.sender, amount, block.timestamp);
     }
 
-    
-
     function claim() public noReentrant {
         require(poolState == PoolState.completed, "Owner has not closed the pool yet");
         require(contributionOf[msg.sender] > 0, "you don't have enough contribution!!");
-        
+
         uint256 volume = contributionOf[msg.sender];
         uint256 totalClaim = claimedOf[msg.sender];
-        uint256 claimble  = PoolLibrary.convertCurrencyToToken(volume, rate);
+        uint256 claimble = PoolLibrary.convertCurrencyToToken(volume, rate);
         uint256 avalible = claimble.sub(totalClaim);
-        require(avalible > 0 , "NO Reward Avalible For Claim");
-        
+        require(avalible > 0, "NO Reward Avalible For Claim");
+
         claimedOf[msg.sender] += avalible;
         totalClaimed = totalClaimed.add(avalible);
         IERC20(token).safeTransfer(msg.sender, avalible);
         emit Claimed(msg.sender, avalible, totalClaimed);
-        
     }
 
     function withdrawContribution() external noReentrant {
@@ -3961,7 +3937,7 @@ function _initializeSettings(
         }
         require(contributionOf[msg.sender] > 0, "You Don't Have Enough contribution");
         uint256 fees = 0;
-        if(poolState == PoolState.inUse){
+        if (poolState == PoolState.inUse) {
             fees = feesWithdraw;
         }
         uint256 refundAmount = contributionOf[msg.sender];
@@ -3975,7 +3951,7 @@ function _initializeSettings(
         uint256 Countfees = refundAmount.mul(fees).div(10000);
         refundAmount = refundAmount.sub(Countfees);
 
-        if(currency == address(0)) {
+        if (currency == address(0)) {
             payable(msg.sender).sendValue(refundAmount);
             payable(adminWallet).sendValue(Countfees);
         } else {
@@ -3986,96 +3962,79 @@ function _initializeSettings(
         emit WithdrawnContribution(msg.sender, refundAmount);
     }
 
-    function finalize() external onlyOperator noReentrant{
+    function finalize() external onlyOperator noReentrant {
         require(poolState == PoolState.inUse, "Pool was finialized or cancelled");
         // require(totalRaised >= softCap && block.timestamp >= endTime,
         //     "It is not time to finish"
         // );
-        require(totalRaised >= softCap,
-            "Softcap didn't reached!"
-        );
-        
-        
-        uint256 currentRate = totalToken.mul(10**18).div(totalRaised);
-        
+        require(totalRaised >= softCap, "Softcap didn't reached!");
+
+        uint256 currentRate = totalToken.mul(10 ** 18).div(totalRaised);
+
         poolState = PoolState.completed;
         totalVolumePurchased = totalToken;
         rate = currentRate;
         liquidityUnlockTime = block.timestamp + liquidityLockDays;
-        (
-            uint256 ethFee,
-            uint256 tokenFee,
-            uint256 liquidityEth,
-            uint256 liquidityToken
-        ) = PoolLibrary.calculateFeeAndLiquidity(
-            totalRaised, 
-            ethFeePercent, 
-            tokenFeePercent, 
-            totalToken, 
-            liquidityPercent, 
-            currentRate
+        (uint256 ethFee, uint256 tokenFee, uint256 liquidityEth, uint256 liquidityToken) = PoolLibrary
+            .calculateFeeAndLiquidity(
+            totalRaised, ethFeePercent, tokenFeePercent, totalToken, liquidityPercent, currentRate
         );
-       
-        uint256 currencyAmount = currency == address(0) ? address(this).balance : IERC20(currency).balanceOf(address(this));
+
+        uint256 currencyAmount =
+            currency == address(0) ? address(this).balance : IERC20(currency).balanceOf(address(this));
         uint256 remainingEth = currencyAmount.sub(liquidityEth).sub(ethFee);
         uint256 remainingToken = 0;
 
         uint256 totalTokenSpent = liquidityToken.add(tokenFee).add(totalToken);
         remainingToken += IERC20(token).balanceOf(address(this)).sub(totalTokenSpent);
-        
 
         // Pay platform fees
-        if(ethFee > 0){
-            if(currency == address(0))
+        if (ethFee > 0) {
+            if (currency == address(0)) {
                 payable(adminWallet).sendValue(ethFee);
-            else
+            } else {
                 IERC20(currency).safeTransfer(adminWallet, ethFee);
+            }
         }
-        if(tokenFee > 0){
+        if (tokenFee > 0) {
             IERC20(token).safeTransfer(adminWallet, tokenFee);
         }
 
         // Refund remaining
         if (remainingEth > 0) {
-            if(currency == address(0))
+            if (currency == address(0)) {
                 payable(governance).sendValue(remainingEth);
-            else
+            } else {
                 IERC20(currency).safeTransfer(governance, remainingEth);
+            }
         }
-       
-       if (remainingToken > 0) {
+
+        if (remainingToken > 0) {
             // 0: refund, 1: burn
             if (refundType == 0) {
                 IERC20(token).safeTransfer(governance, remainingToken);
             } else {
                 IERC20(token).safeTransfer(address(0xdead), remainingToken);
             }
-       }
+        }
 
         tvl = liquidityEth.mul(2);
         IPoolFactory(factory).increaseTotalValueLocked(currency, tvl);
         uint256 liquidity;
-        if(routerVersion == 2){
-            liquidity = PoolLibrary.addLiquidity(
-                router,
-                currency,
-                token,
-                liquidityEth,
-                liquidityToken,
-                address(this)
-            );
-        }else{
+        if (routerVersion == 2) {
+            liquidity = PoolLibrary.addLiquidity(router, currency, token, liquidityEth, liquidityToken, address(this));
+        } else {
             uint24 fee;
-            if(routerVersion == 3){
+            if (routerVersion == 3) {
                 //pancakeswap V3
                 fee = 2500;
-            }else if(routerVersion == 1){
+            } else if (routerVersion == 1) {
                 //uniswap V3
                 fee = 3000;
             }
-            if(currency == address(0)) {
+            if (currency == address(0)) {
                 currency = INonfungiblePositionManager(router).WETH9();
-                if(liquidityEth> 0){
+                if (liquidityEth > 0) {
                     IWETH(currency).deposit{value: liquidityEth}();
                 }
             }
@@ -4084,12 +4043,12 @@ function _initializeSettings(
             uint256 amount0ToAdd;
             uint256 amount1ToAdd;
             int24 tickSpacing;
-            if(currency> token){
+            if (currency > token) {
                 token0 = token;
                 token1 = currency;
                 amount0ToAdd = liquidityToken;
                 amount1ToAdd = liquidityEth;
-            }else {
+            } else {
                 token0 = currency;
                 token1 = token;
                 amount0ToAdd = liquidityEth;
@@ -4097,47 +4056,40 @@ function _initializeSettings(
             }
             {
                 v3Pair = INonfungiblePositionManager(router).createAndInitializePoolIfNecessary(
-                    token0,
-                    token1,
-                    fee,
-                    uint160(Math.sqrt(Math.mulDiv(amount1ToAdd, 2**192, amount0ToAdd)))
+                    token0, token1, fee, uint160(Math.sqrt(Math.mulDiv(amount1ToAdd, 2 ** 192, amount0ToAdd)))
                 );
                 tickSpacing = IUniswapV3Pair(v3Pair).tickSpacing();
             }
             IERC20(token0).safeApprove(router, amount0ToAdd);
             IERC20(token1).safeApprove(router, amount1ToAdd);
             INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
-                    token0: token0,
-                    token1: token1,
-                    fee: fee,
-                    tickLower: (-887272/tickSpacing)*tickSpacing,
-                    tickUpper: (887272/tickSpacing)*tickSpacing,
-                    amount0Desired: amount0ToAdd,
-                    amount1Desired: amount1ToAdd,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: address(this),
-                    deadline: block.timestamp
-                });
-            
-            (
-                uint256 _tokenId,
-                uint128 _liquidity,
-                uint256 amount0,
-                uint256 amount1
-            ) = INonfungiblePositionManager(router).mint(params);
+                token0: token0,
+                token1: token1,
+                fee: fee,
+                tickLower: (-887272 / tickSpacing) * tickSpacing,
+                tickUpper: (887272 / tickSpacing) * tickSpacing,
+                amount0Desired: amount0ToAdd,
+                amount1Desired: amount1ToAdd,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: address(this),
+                deadline: block.timestamp
+            });
+
+            (uint256 _tokenId, uint128 _liquidity, uint256 amount0, uint256 amount1) =
+                INonfungiblePositionManager(router).mint(params);
 
             liquidity = uint256(_liquidity);
             tokenId = _tokenId;
             // send remaining eth
-            if(token0 == currency){
+            if (token0 == currency) {
                 IERC20(token0).safeTransfer(governance, amount0ToAdd - amount0);
                 if (refundType == 0) {
                     IERC20(token1).safeTransfer(governance, amount1ToAdd - amount1);
                 } else {
                     IERC20(token1).safeTransfer(address(0xdead), amount1ToAdd - amount1);
                 }
-            }else {
+            } else {
                 IERC20(token1).safeTransfer(governance, amount1ToAdd - amount1);
                 if (refundType == 0) {
                     IERC20(token0).safeTransfer(governance, amount0ToAdd - amount0);
@@ -4145,26 +4097,23 @@ function _initializeSettings(
                     IERC20(token0).safeTransfer(address(0xdead), amount0ToAdd - amount0);
                 }
             }
-            
-           
         }
-        
+
         IPoolFactory(factory).removeTopPool(address(this));
         emit Finalized(liquidity, block.timestamp);
     }
 
-    function getPrice() public view returns(uint256){
-        if(totalRaised > 0){
-            uint256 currentRate = totalToken.mul(10**18).div(totalRaised);
+    function getPrice() public view returns (uint256) {
+        if (totalRaised > 0) {
+            uint256 currentRate = totalToken.mul(10 ** 18).div(totalRaised);
             return currentRate;
-        }
-        else{
+        } else {
             return 0;
         }
     }
 
     function cancel() external onlyOperator {
-        require (poolState == PoolState.inUse, "Pool was either finished or cancelled");
+        require(poolState == PoolState.inUse, "Pool was either finished or cancelled");
         poolState = PoolState.cancelled;
         IPoolFactory(factory).removePoolForToken(token, address(this));
         IERC20(token).safeTransfer(governance, IERC20(token).balanceOf(address(this)));
@@ -4183,47 +4132,39 @@ function _initializeSettings(
         require(block.timestamp >= liquidityUnlockTime, "It is not time to unlock liquidity");
         IPoolFactory(factory).decreaseTotalValueLocked(currency, tvl);
         tvl = 0;
-        if(routerVersion == 2) {
+        if (routerVersion == 2) {
             address swapFactory = IUniswapV2Router02(router).factory();
             address pair = IUniswapV2Factory(swapFactory).getPair(
-                currency == address(0) ? IUniswapV2Router02(router).WETH() : currency,
-                token
+                currency == address(0) ? IUniswapV2Router02(router).WETH() : currency, token
             );
             uint256 balance = IERC20(pair).balanceOf(address(this));
             IERC20(pair).safeTransfer(governance, balance);
-        }else{
-            INonfungiblePositionManager(router).safeTransferFrom(
-                address(this),
-                msg.sender,
-                tokenId
-            );
+        } else {
+            INonfungiblePositionManager(router).safeTransferFrom(address(this), msg.sender, tokenId);
         }
-        
 
         // emit LiquidityWithdrawn(balance, block.timestamp);
     }
 
     function emergencyWithdrawLiquidity() external override onlyOwner {
-        if(routerVersion == 2) {
+        if (routerVersion == 2) {
             address swapFactory = IUniswapV2Router02(router).factory();
             address pair = IUniswapV2Factory(swapFactory).getPair(
-                currency == address(0) ? IUniswapV2Router02(router).WETH() : currency,
-                token
+                currency == address(0) ? IUniswapV2Router02(router).WETH() : currency, token
             );
             uint256 balance = IERC20(pair).balanceOf(address(this));
             IERC20(pair).safeTransfer(msg.sender, balance);
-        }else{
-            INonfungiblePositionManager(router).safeTransferFrom(
-                address(this),
-                msg.sender,
-                tokenId
-            );
+        } else {
+            INonfungiblePositionManager(router).safeTransferFrom(address(this), msg.sender, tokenId);
         }
     }
 
-    function emergencyWithdrawToken( address payaddress ,address tokenAddress, uint256 tokens ) external override onlyOwner 
+    function emergencyWithdrawToken(address payaddress, address tokenAddress, uint256 tokens)
+        external
+        override
+        onlyOwner
     {
-       IERC20(tokenAddress).transfer(payaddress, tokens);
+        IERC20(tokenAddress).transfer(payaddress, tokens);
     }
 
     function emergencyWithdraw(address payable to_, uint256 amount_) external override onlyOwner {
@@ -4247,8 +4188,7 @@ function _initializeSettings(
     function liquidityBalance() public view returns (uint256) {
         address swapFactory = IUniswapV2Router02(router).factory();
         address pair = IUniswapV2Factory(swapFactory).getPair(
-            currency == address(0) ? IUniswapV2Router02(router).WETH() : currency,
-            token
+            currency == address(0) ? IUniswapV2Router02(router).WETH() : currency, token
         );
         if (pair == address(0)) return 0;
         return IERC20(pair).balanceOf(address(this));
@@ -4262,33 +4202,30 @@ function _initializeSettings(
         return (totalRaised, uint8(poolState), completedKyc, liquidityUnlockTime, poolDetails);
     }
 
-    function userAvalibleClaim(address _userAddress) public view returns (uint256){
-
-         uint256 volume = contributionOf[_userAddress];
-         if(volume > 0 && poolState == PoolState.completed){
+    function userAvalibleClaim(address _userAddress) public view returns (uint256) {
+        uint256 volume = contributionOf[_userAddress];
+        if (volume > 0 && poolState == PoolState.completed) {
             uint256 totalClaim = claimedOf[_userAddress];
-            uint256 claimble  = PoolLibrary.convertCurrencyToToken(volume, rate);
+            uint256 claimble = PoolLibrary.convertCurrencyToToken(volume, rate);
             uint256 avalible = claimble.sub(totalClaim);
             return avalible;
-         }
-         else{
-             return 0;
-         } 
+        } else {
+            return 0;
+        }
     }
 
-    function setKycAudit(bool _kyc , bool _audit , string memory _kyclink,string memory _auditlink) override external onlyAdmin{
+    function setKycAudit(bool _kyc, bool _audit, string memory _kyclink, string memory _auditlink)
+        external
+        override
+        onlyAdmin
+    {
         kycStatus = _kyc;
         auditStatus = _audit;
-        kycLink=_kyclink;
-        auditLink=_auditlink;
+        kycLink = _kyclink;
+        auditLink = _auditlink;
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
+    function onERC721Received(address, address, uint256, bytes memory) public virtual override returns (bytes4) {
         return this.onERC721Received.selector;
     }
 }
