@@ -8,18 +8,18 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract DeployPoolFactory is Script {
-    address _master;
-    address _privatemaster;
-    address _poolmanager;
-    address _fairmaster;
-    uint8 _version;
-    uint256 _kycPrice;
-    uint256 _auditPrice;
-    uint256 _masterPrice;
-    uint256 _privatemasterPrice;
-    uint256 _fairmasterPrice;
-    uint256 _contributeWithdrawFee;
-    bool _IsEnabled;
+    address _master = 0xc58dC09c987865583E1C42C96BE76D2AD4a9A336;//EOA
+    address _privatemaster = 0xc58dC09c987865583E1C42C96BE76D2AD4a9A336; //EOA
+    address _poolmanager; //Pool Manager
+    address _fairmaster; // FAir Pool
+    uint8 _version = 1;
+    uint256 _kycPrice = 2e17;
+    uint256 _auditPrice = 1.5e17;
+    uint256 _masterPrice = 2e15;
+    uint256 _privatemasterPrice = 2e14;
+    uint256 _fairmasterPrice = 2e15;
+    uint256 _contributeWithdrawFee = 50;
+    bool _IsEnabled = true;
 
     function run() external {
         vm.startBroadcast();
