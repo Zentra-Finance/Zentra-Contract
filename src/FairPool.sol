@@ -421,7 +421,7 @@ contract FairPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721Rece
         IPoolManager(poolManager).increaseTotalValueLocked(currency, tvl);
         uint256 liquidity;
         if (routerVersion == 2) {
-            //V@
+            //V2
             liquidity = PoolLibrary.addLiquidity(router, currency, token, liquidityEth, liquidityToken, address(this));
         } else {
             uint24 fee;

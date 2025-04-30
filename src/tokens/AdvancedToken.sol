@@ -57,7 +57,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     mapping(address => bool) public automatedMarketMakerPairs;
     mapping(address => bool) public whiteList;
     bytes32 public constant DEPLOYMENT_KEY = keccak256("ADVANCED_TOKEN");
-    IFeeManager private constant FEE_MANAGER = IFeeManager(address(0));
+    IFeeManager private constant FEE_MANAGER = IFeeManager(address(0x9a76954a5b317aFCC9ec85070515B2273a8c3395));
 
     constructor(Args memory args) payable ERC20(args.name, args.symbol) Ownable(msg.sender) {
         _decimals = args._decimals;

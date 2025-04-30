@@ -16,3 +16,5 @@ contract DeployBondingPool is Script {
         vm.stopBroadcast();
     }
 }
+
+//forge script script/DeployBondingPool.s.sol:DeployBondingPool --rpc-url $ETH_RPC_URL --account defaultKey --broadcast  --verify --verifier blockscout --verifier-url $VERIFIER_URL

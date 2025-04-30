@@ -321,18 +321,18 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         finalize();
     }
 
-    function getReserves(uint256 _amount, uint256 _type) public view returns (uint256) {
-        // type == 1? buy: type == 2? sell
-        uint256 dy;
-        if (_type == 1) {
-            // get tokenA amount corresponding eth _amount
-            dy = tokenAAmount - (k / (ethAmount + _amount));
-        } else if (_type == 2) {
-            // get ETH amount corresponding tokenA _amount
-            dy = dy = ethAmount - (k / (tokenAAmount + _amount)); // eth amount to pop
-        }
-        return dy;
-    }
+    // function getReserves(uint256 _amount, uint256 _type) public view returns (uint256) {
+    //     // type == 1? buy: type == 2? sell
+    //     uint256 dy;
+    //     if (_type == 1) {
+    //         // get tokenA amount corresponding eth _amount
+    //         dy = tokenAAmount - (k / (ethAmount + _amount));
+    //     } else if (_type == 2) {
+    //         // get ETH amount corresponding tokenA _amount
+    //         dy = dy = ethAmount - (k / (tokenAAmount + _amount)); // eth amount to pop
+    //     }
+    //     return dy;
+    // }
 
     function finalize() internal nonReentrant {
         require(poolState == PoolState.inUse, "Pool was finialized or cancelled");
@@ -353,9 +353,9 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         // IERC20(token).safeTransfer(address(0xdead), remainingToken);
         uint24 fee;
         //pancakeswap V3
-        fee = 2500;
+        // fee = 2500;
         //uniswap V3
-        // fee = 3000;
+        fee = 3000;
         address currency = INonfungiblePositionManager(nonfungiblePositionManager).WETH9();
         if (currencyAmount > 0) {
             IWETH(currency).deposit{value: currencyAmount}();

@@ -10,7 +10,7 @@ contract StandardToken is ERC20, Ownable {
     uint256 private _totalSupply;
     address payable private _serviceFeeReceiver;
     bytes32 public constant DEPLOYMENT_KEY = keccak256("STANDARD_TOKEN");
-    IFeeManager private constant FEE_MANAGER = IFeeManager(address(0));
+    IFeeManager private constant FEE_MANAGER = IFeeManager(address(0x9a76954a5b317aFCC9ec85070515B2273a8c3395));
 
     constructor(string memory name_, string memory symbol_, uint8 decimals_, uint256 totalSupply_)
         payable

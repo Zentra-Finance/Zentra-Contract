@@ -36,7 +36,7 @@ contract PoolFactory is OwnableUpgradeable {
     uint256 public bondingTokenCreationFee;
     uint256 public ethToBonding;
     uint256[4] public buySellFeeSettings = [1, 1, 6900, 1e18]; // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
-
+uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ETHFeePercent (after finalize) 5%
     using Clones for address;
 
     address payable public adminWallet;
@@ -57,7 +57,7 @@ contract PoolFactory is OwnableUpgradeable {
         uint8 _version,
         uint256 _kycPrice,
         uint256 _auditPrice,
-        uint256 _masterPrice,
+        // uint256 _masterPrice,
         uint256 _fairmasterPrice,
         uint256 _contributeWithdrawFee,
         bool _IsEnabled,
@@ -76,7 +76,7 @@ contract PoolFactory is OwnableUpgradeable {
         fairmaster = _fairmaster;
         kycPrice = _kycPrice;
         auditPrice = _auditPrice;
-        masterPrice = _masterPrice;
+        // masterPrice = _masterPrice;
         fairmasterPrice = _fairmasterPrice;
         contributeWithdrawFee = _contributeWithdrawFee;
         version = _version;
@@ -96,22 +96,22 @@ contract PoolFactory is OwnableUpgradeable {
     event BondingTokenCreated(address indexed creator, address indexed pool, address indexed token);
 
     function setMasterAddress(address payable _address) public onlyOwner {
-        require(_address != address(0), "master must be set");
+        require(_address != address(0), "zero address");
         master = _address;
     }
 
     function setFairAddress(address _address) public onlyOwner {
-        require(_address != address(0), "master must be set");
+        require(_address != address(0), "zero address");
         fairmaster = _address;
     }
 
     function setPrivateAddress(address _address) public onlyOwner {
-        require(_address != address(0), "master must be set");
+        require(_address != address(0), "zero address");
         privatemaster = _address;
     }
 
     function setAdminWallet(address payable _address) public onlyOwner {
-        require(_address != address(0), "master must be set");
+        require(_address != address(0), "zero address");
         adminWallet = _address;
     }
 
@@ -132,7 +132,7 @@ contract PoolFactory is OwnableUpgradeable {
         // uint8 _routerVersion,
         address _pair,
         address[4] memory _addrs, //[0] = new token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = supraFeedClient
-        uint256[2] memory _feeSettings,
+        // uint256[2] memory _feeSettings,
         // uint256[4] memory _buySellFeeSettings, //[0] = buy Fee, [1] = sell fee, [2] = market cap settings [3] = target eth to collect on pool
         string memory _poolDetails,
         address _supraOraclePull
@@ -140,7 +140,7 @@ contract PoolFactory is OwnableUpgradeable {
         IBondingPool(_pair).initialize(
             // _routerVersion,
             _addrs,
-            _feeSettings,
+            feeSettings,
             buySellFeeSettings,
             _poolDetails,
             [master, poolManager, adminWallet],
@@ -153,7 +153,7 @@ contract PoolFactory is OwnableUpgradeable {
     function createBondingToken(
         address creator,
         // address[4] memory _addrs, //[0] = template token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = supraFeedClient
-        uint256[2] memory _feeSettings, // [0] = is for token fee when finish time, [1] = eth fee when finish time
+        // uint256[2] memory _feeSettings, // [0] = is for token fee when finish time, [1] = eth fee when finish time
         // uint256[4] memory _buySellFeeSettings, // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
         // uint256[2] memory _createFeeSettings, // [0] = creation fee, [1] = eth amount to bonding pool //@audit-issue  should not be passing this manually
         string memory _poolDetails,
@@ -183,7 +183,7 @@ contract PoolFactory is OwnableUpgradeable {
             // _routerVersion,
             pair,
             _addrs,
-            _feeSettings,
+            // _feeSettings,
             // _buySellFeeSettings,
             _poolDetails,
             supraOraclePull
@@ -200,7 +200,7 @@ contract PoolFactory is OwnableUpgradeable {
         address[4] memory _addrs,
         uint256[2] memory _capSettings,
         uint256[3] memory _timeSettings,
-        uint256[2] memory _feeSettings,
+        // uint256[2] memory _feeSettings,
         uint256[3] memory _auditKRVTokenId,
         // uint256 _audit,
         // uint256 _kyc,
@@ -212,7 +212,7 @@ contract PoolFactory is OwnableUpgradeable {
             _addrs,
             _capSettings,
             _timeSettings,
-            _feeSettings,
+            feeSettings,
             _auditKRVTokenId,
             _liquidityPercent,
             _poolDetails,
@@ -238,8 +238,8 @@ contract PoolFactory is OwnableUpgradeable {
         address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = currency
         uint256[2] memory _capSettings, //[0] = softCap, [1] = totalToken
         uint256[3] memory _timeSettings, // [0] =startTime, [1] =endTime, [2]=liquidityLockDays
-        uint256[2] memory _feeSettings, // [0] = tokenFeePercent, [1] = ethFeePercent
-        uint256[3] memory _auditKRVTokenId, //[0] = audit, [1] = kyc, [2] = routerVersion (2 ==v2 or 3 ==v3)
+        // uint256[2] memory _feeSettings, // [0] = tokenFeePercent, [1] = ethFeePercent
+        uint256[3] memory _auditKRVTokenId, //[0] = audit (if 1, it means collect fees), [1] = kyc (if 1, it means collect fees), [2] = routerVersion (2 ==v2 or 3 ==v3)
         // uint256 _audit,
         // uint256 _kyc,
         uint256[2] memory _liquidityPercent, // [0] = liquidityPercent, [1]= refundType
@@ -265,7 +265,7 @@ contract PoolFactory is OwnableUpgradeable {
             _addrs,
             _capSettings,
             _timeSettings,
-            _feeSettings,
+            // _feeSettings,
             _auditKRVTokenId,
             // _audit,
             // _kyc,
@@ -274,7 +274,7 @@ contract PoolFactory is OwnableUpgradeable {
             _otherInfo
         );
 
-        uint256 totalToken = _feesFairCount(_capSettings[1], _feeSettings[0], _liquidityPercent[0]);
+        uint256 totalToken = _feesFairCount(_capSettings[1], feeSettings[0], _liquidityPercent[0]);
 
         address governance = _addrs[2];
 
@@ -309,20 +309,20 @@ contract PoolFactory is OwnableUpgradeable {
         );
     }
 
-    function checkfees(uint256 _audit, uint256 _kyc) internal {
-        uint256 totalFees = 0;
-        totalFees += masterPrice;
+    // function checkfees(uint256 _audit, uint256 _kyc) internal {
+    //     uint256 totalFees = 0;
+    //     totalFees += masterPrice;
 
-        if (_audit == 1) {
-            totalFees += auditPrice;
-        }
+    //     if (_audit == 1) {
+    //         totalFees += auditPrice;
+    //     }
 
-        if (_kyc == 1) {
-            totalFees += kycPrice;
-        }
+    //     if (_kyc == 1) {
+    //         totalFees += kycPrice;
+    //     }
 
-        require(msg.value >= totalFees, "Payble Amount is less than required !!");
-    }
+    //     require(msg.value >= totalFees, "Payble Amount is less than required !!");
+    // }
 
     function fairFees(uint256 _kyc, uint256 _audit) internal {
         uint256 totalFees = 0;
@@ -383,9 +383,9 @@ contract PoolFactory is OwnableUpgradeable {
         auditPrice = _price;
     }
 
-    function setPresalePoolPrice(uint256 _price) public onlyOwner {
-        masterPrice = _price;
-    }
+    // function setPresalePoolPrice(uint256 _price) public onlyOwner {
+    //     masterPrice = _price;
+    // }
 
     function setBondingTokenCreationFee(uint256 _price) public onlyOwner {
         bondingTokenCreationFee = _price;
@@ -440,6 +440,16 @@ contract PoolFactory is OwnableUpgradeable {
             "Invalid buy sell fee settings. Must be percentage (0 -> 100)"
         );
         buySellFeeSettings = _buySellFeeSettings;
+    }
+
+    function setFinalizeFeeSettings(uint256[2] memory _feeSettings) public onlyOwner {
+        // require(_bondingToken != address(0), "Bonding Token address must be set!!");
+        require(
+            _feeSettings[0] >= 0 && _feeSettings[0] <= 100 && _feeSettings[1] >= 0
+                && _feeSettings[1] <= 100,
+            "Invalid buy sell fee settings. Must be percentage (0 -> 100)"
+        );
+        feeSettings = _feeSettings;
     }
 
     function setBondingPool(address _bondingPool) public onlyOwner {

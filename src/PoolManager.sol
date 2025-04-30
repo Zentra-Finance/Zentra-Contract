@@ -80,7 +80,7 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
     mapping(address => EnumerableSet.AddressSet) private _bondingPoolsOf;
     mapping(address => EnumerableSet.AddressSet) private _contributedPoolsOf;
     mapping(address => address) private _fairPoolForToken;
-    TopPoolInfo[] private _topPools;
+    // TopPoolInfo[] private _topPools;
 
     // address public WETH;
     IUniswapV2Pair public ethUSDTPool;
@@ -213,10 +213,39 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         }
         return allPools;
     }
-
-    function getFairPoolAt(uint256 index) public view returns (address) {
-        return _fairPools.at(index);
+    function getFairPoolsRange(uint256 from, uint56 to) public view returns (address[] memory) {
+        uint256 length = _fairPools.length();
+        require(from < to, "invalid range");
+        require(to < length, "Out of bound");
+        address[] memory allPools = new address[](to - from);
+        for (uint256 i = from; i <= to; i++) {
+            allPools[i] = _fairPools.at(i);
+        }
+        return allPools;
     }
+    function getBondingPoolsRange(uint256 from, uint56 to) public view returns (address[] memory) {
+        uint256 length = _bondingPools.length();
+        require(from < to, "invalid range");
+        require(to < length, "Out of bound");
+        address[] memory allPools = new address[](to - from);
+        for (uint256 i = from; i <= to; i++) {
+            allPools[i] = _bondingPools.at(i);
+        }
+        return allPools;
+    }
+
+    function getAllBondingPools() public view returns (address[] memory) {
+        uint256 length = _bondingPools.length();
+        address[] memory allPools = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            allPools[i] = _bondingPools.at(i);
+        }
+        return allPools;
+    }
+
+    // function getFairPoolAt(uint256 index) public view returns (address) {
+    //     return _fairPools.at(index);
+    // }
 
 
     function getTotalNumberOfFairPools() public view returns (uint256) {
@@ -252,15 +281,15 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         return _poolsForVersion[version].at(index);
     }
 
-    function getTopPool() public view returns (TopPoolInfo[] memory) {
-        return _topPools;
-    }
+    // function getTopPool() public view returns (TopPoolInfo[] memory) {
+    //     return _topPools;
+    // }
 
-    function initializeTopPools() public onlyOwner {
-        for (uint256 i = 0; i < 50; i++) {
-            _topPools.push(TopPoolInfo(0, address(0)));
-        }
-    }
+    // function initializeTopPools() public onlyOwner {
+    //     for (uint256 i = 0; i < 50; i++) {
+    //         _topPools.push(TopPoolInfo(0, address(0)));
+    //     }
+    // }
 
 
 
