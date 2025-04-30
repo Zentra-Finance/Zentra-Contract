@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.20;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IPool} from "./interfaces/IPool.sol";
@@ -9,78 +8,7 @@ import {IBondingPool} from "./interfaces/IBondingPool.sol";
 import {IPoolManager} from "./interfaces/IPoolManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-interface IPancakePair {
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    function name() external pure returns (string memory);
-
-    function symbol() external pure returns (string memory);
-
-    function decimals() external pure returns (uint8);
-
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address owner) external view returns (uint256);
-
-    function allowance(address owner, address spender) external view returns (uint256);
-
-    function approve(address spender, uint256 value) external returns (bool);
-
-    function transfer(address to, uint256 value) external returns (bool);
-
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
-
-    function DOMAIN_SEPARATOR() external view returns (bytes32);
-
-    function PERMIT_TYPEHASH() external pure returns (bytes32);
-
-    function nonces(address owner) external view returns (uint256);
-
-    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
-        external;
-
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint256 amount0In,
-        uint256 amount1In,
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
-    );
-    event Sync(uint112 reserve0, uint112 reserve1);
-
-    function MINIMUM_LIQUIDITY() external pure returns (uint256);
-
-    function factory() external view returns (address);
-
-    function token0() external view returns (address);
-
-    function token1() external view returns (address);
-
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
-
-    function price0CumulativeLast() external view returns (uint256);
-
-    function price1CumulativeLast() external view returns (uint256);
-
-    function kLast() external view returns (uint256);
-
-    function mint(address to) external returns (uint256 liquidity);
-
-    function burn(address to) external returns (uint256 amount0, uint256 amount1);
-
-    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
-
-    function skim(address to) external;
-
-    function sync() external;
-
-    function initialize(address, address) external;
-}
+import {IUniswapV2Pair} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
 contract PoolManager is OwnableUpgradeable, IPoolManager {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -144,16 +72,18 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
     }
 
     EnumerableSet.AddressSet private poolFactories;
-    EnumerableSet.AddressSet private _pools;
+    EnumerableSet.AddressSet private allowedPools;
+    EnumerableSet.AddressSet private _fairPools;
 
     mapping(uint8 => EnumerableSet.AddressSet) private _poolsForVersion;
-    mapping(address => EnumerableSet.AddressSet) private _poolsOf;
+    mapping(address => EnumerableSet.AddressSet) private _fairPoolsOf;
+    mapping(address => EnumerableSet.AddressSet) private _bondingPoolsOf;
     mapping(address => EnumerableSet.AddressSet) private _contributedPoolsOf;
-    mapping(address => address) private _poolForToken;
+    mapping(address => address) private _fairPoolForToken;
     TopPoolInfo[] private _topPools;
 
-    address public WETH;
-    IPancakePair public ethUSDTPool;
+    // address public WETH;
+    IUniswapV2Pair public ethUSDTPool;
     mapping(address => uint256) public totalValueLocked;
     mapping(address => uint256) public totalLiquidityRaised;
     uint256 public totalParticipants;
@@ -164,62 +94,55 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
 
     receive() external payable {}
 
-    function initialize(address _WETH, address _ethUSDTPool) external initializer {
-        WETH = _WETH;
-        ethUSDTPool = IPancakePair(_ethUSDTPool);
-        __Ownable_init(msg.sender);
+    function initialize(address initialOwner) external initializer {
+       
+        __Ownable_init(initialOwner);
     }
 
     modifier onlyAllowedFactory() {
-        emit sender(msg.sender);
+        // emit sender(msg.sender);
         require(poolFactories.contains(msg.sender), "Not a whitelisted factory");
         _;
     }
 
-    function getETHPrice() public view returns (uint256) {
-        (uint256 _reserve0, uint256 _reserve1,) = ethUSDTPool.getReserves();
-        if (ethUSDTPool.token0() == WETH) {
-            return (_reserve1 * 1e18) / _reserve0;
-        } else {
-            return (_reserve0 * 1e18) / _reserve1;
-        }
+    modifier onlyAllowedPools() {
+        // emit sender(msg.sender);
+        require(allowedPools.contains(msg.sender), "Not a whitelisted factory");
+        _;
     }
+
 
     function updateETHUSDtPool(address pool) public onlyOwner {
-        ethUSDTPool = IPancakePair(pool);
+        ethUSDTPool = IUniswapV2Pair(pool);
     }
 
-    function addPoolFactory(address factory) public onlyAllowedFactory {
+
+    function addAllowedPools(address _pool) public onlyAllowedFactory {
+        allowedPools.add(_pool);
+    }
+
+    function addPoolFactory(address factory) public onlyOwner {
         poolFactories.add(factory);
     }
 
-    function addAdminPoolFactory(address factory) public onlyOwner {
-        poolFactories.add(factory);
-    }
-
-    function addPoolFactories(address[] memory factories) external onlyOwner {
-        for (uint256 i = 0; i < factories.length; i++) {
-            addPoolFactory(factories[i]);
-        }
-    }
 
     function removePoolFactory(address factory) external onlyOwner {
         poolFactories.remove(factory);
     }
 
-    function isPoolGenerated(address pool) public view returns (bool) {
-        return _pools.contains(pool);
+    function isFairPoolGenerated(address pool) public view returns (bool) {
+        return _fairPools.contains(pool);
     }
 
-    function poolForToken(address token) external view returns (address) {
-        return _poolForToken[token];
+    function fairPoolForToken(address token) external view returns (address) {
+        return _fairPoolForToken[token];
     }
 
-    function registerPool(address pool, address token, address owner, uint8 version) external onlyAllowedFactory {
-        _pools.add(pool);
+    function registerFairPool(address pool, address token, address owner, uint8 version) external onlyAllowedFactory {
+        _fairPools.add(pool);
         _poolsForVersion[version].add(pool);
-        _poolsOf[owner].add(pool);
-        _poolForToken[token] = pool;
+        _fairPoolsOf[owner].add(pool);
+        _fairPoolForToken[token] = pool;
     }
 
     function registerBondingPool(address pool, address token, address owner, uint8 version)
@@ -228,18 +151,18 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
     {
         _bondingPools.add(pool);
         _poolsForVersion[version].add(pool);
-        _poolsOf[owner].add(pool);
-        _poolForToken[token] = pool;
+        _bondingPoolsOf[owner].add(pool);
+        // _fairPoolForToken[token] = pool;
     }
 
-    function increaseTotalValueLocked(address currency, uint256 value) external onlyAllowedFactory {
+    function increaseTotalValueLocked(address currency, uint256 value) external onlyAllowedPools {
         totalValueLocked[currency] = totalValueLocked[currency] + value;
         totalLiquidityRaised[currency] = totalLiquidityRaised[currency] + value;
 
         emit TvlChanged(currency, totalValueLocked[currency], totalLiquidityRaised[currency]);
     }
 
-    function decreaseTotalValueLocked(address currency, uint256 value) external onlyAllowedFactory {
+    function decreaseTotalValueLocked(address currency, uint256 value) external onlyAllowedPools {
         if (totalValueLocked[currency] < value) {
             totalValueLocked[currency] = 0;
         } else {
@@ -248,57 +171,56 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         emit TvlChanged(currency, totalValueLocked[currency], totalLiquidityRaised[currency]);
     }
 
-    function recordContribution(address user, address pool) external onlyAllowedFactory {
+    function recordContribution(address user, address pool) external onlyAllowedPools {
         totalParticipants = totalParticipants + 1;
         _contributedPoolsOf[user].add(pool);
         emit ContributionUpdated(totalParticipants);
     }
 
-    function removePoolForToken(address token, address pool) external onlyAllowedFactory {
-        _poolForToken[token] = address(0);
+    function removeFairPoolForToken(address token, address pool) external onlyAllowedPools {
+        _fairPoolForToken[token] = address(0);
         emit PoolForTokenRemoved(token, pool);
     }
 
-    function emergencyRemovePoolForToken(address token, address pool) public onlyOwner {
-        _poolForToken[token] = address(0);
-        _pools.remove(pool);
+    function emergencyRemoveFairPoolForToken(address token, address pool) public onlyOwner {
+        _fairPoolForToken[token] = address(0);
+        _fairPools.remove(pool);
         emit PoolForTokenRemoved(token, pool);
     }
 
-    function getPoolsOf(address owner) public view returns (address[] memory) {
-        uint256 length = _poolsOf[owner].length();
+    function getFairPoolsOf(address owner) public view returns (address[] memory) {
+        uint256 length = _fairPoolsOf[owner].length();
         address[] memory allPools = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            allPools[i] = _poolsOf[owner].at(i);
+            allPools[i] = _fairPoolsOf[owner].at(i);
+        }
+        return allPools;
+    }
+    function getBondingPoolsOf(address owner) public view returns (address[] memory) {
+        uint256 length = _bondingPoolsOf[owner].length();
+        address[] memory allPools = new address[](length);
+        for (uint256 i = 0; i < length; i++) {
+            allPools[i] = _bondingPoolsOf[owner].at(i);
         }
         return allPools;
     }
 
-    function getAllPools() public view returns (address[] memory) {
-        uint256 length = _pools.length();
+    function getAllFairPools() public view returns (address[] memory) {
+        uint256 length = _fairPools.length();
         address[] memory allPools = new address[](length);
         for (uint256 i = 0; i < length; i++) {
-            allPools[i] = _pools.at(i);
+            allPools[i] = _fairPools.at(i);
         }
         return allPools;
     }
 
-    function getPoolAt(uint256 index) public view returns (address) {
-        return _pools.at(index);
+    function getFairPoolAt(uint256 index) public view returns (address) {
+        return _fairPools.at(index);
     }
 
-    function removePoolAt(uint256 index) public onlyOwner {
-        address poolAddress = _pools.at(index);
-        _pools.remove(poolAddress);
-    }
 
-    function removeBondingPoolAt(uint256 index) public onlyOwner {
-        address poolAddress = _bondingPools.at(index);
-        _bondingPools.remove(poolAddress);
-    }
-
-    function getTotalNumberOfPools() public view returns (uint256) {
-        return _pools.length();
+    function getTotalNumberOfFairPools() public view returns (uint256) {
+        return _fairPools.length();
     }
 
     function getTotalNumberOfBondingPools() public view returns (uint256) {
@@ -322,7 +244,7 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         return _contributedPoolsOf[user].at(index);
     }
 
-    function getTotalNumberOfPools(uint8 version) public view returns (uint256) {
+    function getTotalNumberOfPoolsForVersion(uint8 version) public view returns (uint256) {
         return _poolsForVersion[version].length();
     }
 
@@ -340,49 +262,7 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         }
     }
 
-    function addTopPool(address poolAddress, address currency, uint256 raisedAmount) external onlyAllowedFactory {
-        uint256 ETHPrice = currency == address(0) ? getETHPrice() : 1e18;
-        raisedAmount = raisedAmount * ETHPrice;
-        if (raisedAmount >= _topPools[49].totalRaised) {
-            bool status = false;
 
-            for (uint256 i = 0; i < 49; i++) {
-                if (status || _topPools[i].poolAddress == poolAddress) {
-                    _topPools[i] = _topPools[i + 1];
-                    status = true;
-                }
-            }
-
-            _topPools[49] = TopPoolInfo(0, address(0));
-
-            status = false;
-            TopPoolInfo memory tmp;
-            for (uint256 i = 0; i < 50; i++) {
-                if (!status && _topPools[i].totalRaised <= raisedAmount) {
-                    tmp = _topPools[i];
-                    _topPools[i] = TopPoolInfo(raisedAmount, poolAddress);
-                    status = true;
-                } else if (status) {
-                    TopPoolInfo memory tmp1 = tmp;
-                    tmp = _topPools[i];
-                    _topPools[i] = tmp1;
-                }
-            }
-        }
-    }
-
-    function removeTopPool(address poolAddress) external onlyAllowedFactory {
-        bool status = false;
-
-        for (uint256 i = 0; i < 49; i++) {
-            if (status || _topPools[i].poolAddress == poolAddress) {
-                _topPools[i] = _topPools[i + 1];
-                status = true;
-            }
-        }
-
-        _topPools[49] = TopPoolInfo(0, address(0));
-    }
 
     function getCumulativeBondingInfo() external view returns (CumulativeBondingInfo[] memory) {
         uint256 length = _bondingPools.length();
@@ -426,9 +306,9 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
         return bondingInfo;
     }
 
-    function getCumulativePoolInfo(uint256 start, uint256 end) external view returns (CumulativeLockInfo[] memory) {
-        if (end >= _pools.length()) {
-            end = _pools.length() - 1;
+    function getCumulativeFairPoolInfo(uint256 start, uint256 end) external view returns (CumulativeLockInfo[] memory) {
+        if (end >= _fairPools.length()) {
+            end = _fairPools.length() - 1;
         }
         uint256 length = end - start + 1;
         CumulativeLockInfo[] memory lockInfo = new CumulativeLockInfo[](length);
@@ -446,9 +326,9 @@ contract PoolManager is OwnableUpgradeable, IPoolManager {
                 uint256 routerVersion,
                 uint256 tokenId,
                 address v3Pair
-            ) = IPool(_pools.at(i)).getPoolInfo();
+            ) = IPool(_fairPools.at(i)).getPoolInfo();
             lockInfo[currentIndex] = CumulativeLockInfo(
-                _pools.at(i),
+                _fairPools.at(i),
                 token,
                 currency,
                 saleType[0],

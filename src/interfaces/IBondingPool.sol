@@ -8,7 +8,8 @@ interface IBondingPool {
         uint256[4] memory _buySellFeeSettings, //[2] = marketcap settings [3] = target eth to collect on pool ()
         string memory _poolDetails,
         address[3] memory _linkAddress,
-        uint8 _version
+        uint8 _version,
+        address _supraOraclePull
     ) external;
     function getPoolInfo()
         external

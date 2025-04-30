@@ -1,79 +1,26 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {IUniswapV2Router01} from "@uniswap/v2-periphery/interfaces/IUniswapV2Router01.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IWETH} from "@uniswap/v2-periphery/interfaces/IWETH.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol";
-import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {IPool} from "./interfaces/IPool.sol";
-import {IPrivatePool} from "./interfaces/IPrivatePool.sol";
-import {IFairPool} from "./interfaces/IFairPool.sol";
-import {IBondingPool} from "./interfaces/IBondingPool.sol";
-import {IBondingToken} from "./interfaces/IBondingToken.sol";
 import {IPoolManager} from "./interfaces/IPoolManager.sol";
-import {Address} from '@openzeppelin/contracts/utils/Address.sol';
-import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import {Math} from '@openzeppelin/contracts/utils/math/Math.sol';
-
-interface IUniswapV3Pair {
-    function factory() external view returns (address);
-
-    /// @notice The first of the two tokens of the pool, sorted by address
-    /// @return The token contract address
-    function token0() external view returns (address);
-
-    /// @notice The second of the two tokens of the pool, sorted by address
-    /// @return The token contract address
-    function token1() external view returns (address);
-
-    /// @notice The pool's fee in hundredths of a bip, i.e. 1e-6
-    /// @return The fee
-    function fee() external view returns (uint24);
-    function tickSpacing() external view returns (int24);
-}
-
-interface AggregatorV3Interface {
-    function decimals() external view returns (uint8);
-
-    function description() external view returns (string memory);
-
-    function version() external view returns (uint256);
-
-    function getRoundData(uint80 _roundId)
-        external
-        view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
-
-    function latestRoundData()
-        external
-        view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
-}
+import {IFeedClient} from "./interfaces/IFeedClient.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {ISupraOraclePull} from "./interfaces/ISupraOraclePull.sol";
 
 contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721Receiver {
     using SafeERC20 for IERC20;
     using Address for address payable;
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    uint8 public VERSION;
-
-    // struct poolInfo{
-    //     address token;
-    //     uint256  ethAmount;
-    //     uint256 softCap;
-    //     uint8 poolState;
-    //     uint8 poolType;
-    //     uint256 rate;
-    //     uint256 liquidityPercent;
-    //     uint256 liquidityUnlockTime;
-    // }
 
     enum PoolState {
         inUse,
@@ -88,16 +35,17 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         bonding
     }
 
+    uint8 public VERSION;
     uint256 public tokenId;
     address public v3Pair;
     address public poolManager;
-    address public router;
+    address public nonfungiblePositionManager;
     address public governance;
     uint256 private buyFee; //percent
     uint256 private sellFee; //percent
     uint256 public marketCap; //amount here 69k
     address payable private adminWallet;
-    address public ethPriceFeed;
+    address public supraFeedClient;
 
     // address public currency;
     address public token;
@@ -132,7 +80,10 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
     uint256 public circulatingSupply; //near 4 Million * 10**18
 
     uint256 private k; // x*y = k
-
+    uint256 public staleTimeThreshold = 30; // For Pricefeed  (default 30 sec)
+    /// Conversion factor between millisecond and second
+    uint256 public constant MILLISECOND_CONVERSION_FACTOR = 1000;
+    ISupraOraclePull supraOraclePull;
     // bool public completedKyc;
 
     EnumerableSet.AddressSet private holders;
@@ -170,12 +121,13 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
 
     function initialize(
         // uint8 _routerVersion,
-        address[4] memory _addrs, //[0] = token addr, [1] = router, [2] = governance , [3] = ethPriceFeed
+        address[4] memory _addrs, //[0] = token addr, [1] = nonfungiblePositionManager, [2] = governance , [3] = supraFeedClient
         uint256[2] memory _feeSettings,
         uint256[4] memory _buySellFeeSettings, //[0] = buy Fee, [1] = sell fee, [2] = market cap settings, [3] = initialEthAmount(1eth * 10**18)
         string memory _poolDetails,
         address[3] memory _linkAddress, // [0] = master, [1] = pool manager, [2] = admin wallet
-        uint8 _version
+        uint8 _version,
+        address _supraOraclePull
     ) external initializer {
         __ReentrancyGuard_init();
         require(poolManager == address(0), "Pool: Forbidden");
@@ -191,8 +143,8 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         );
         require(_buySellFeeSettings[2] > 0, "Market Cap should be greater than 0!");
         require(_buySellFeeSettings[3] > 0, "Target Eth amount should be greater than 0!");
-        OwnableUpgradeable.__Ownable_init(msg.sender);
-        transferOwnership(_linkAddress[0]);
+        __Ownable_init(_linkAddress[0]);
+        // transferOwnership(_linkAddress[0]);
         poolManager = _linkAddress[1];
         adminWallet = payable(_linkAddress[2]);
 
@@ -201,16 +153,16 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         marketCap = _buySellFeeSettings[2];
 
         token = _addrs[0];
-        router = _addrs[1];
+        nonfungiblePositionManager = _addrs[1];
         governance = _addrs[2];
-        ethPriceFeed = _addrs[3];
+        supraFeedClient = _addrs[3];
         //transfer 1% to dev wallet
         IERC20(token).safeTransfer(governance, IERC20(token).balanceOf(address(this)) / 100);
         tokenAAmount = IERC20(token).balanceOf(address(this));
         tokenTotalSupply = tokenAAmount;
-        
+
         IERC20(token).forceApprove(address(this), tokenAAmount);
-        ethAmount = address(this).balance + _buySellFeeSettings[3]; // As if 1 eth collected already
+        ethAmount = address(this).balance + _buySellFeeSettings[3]; // As if 1 eth collected already -- to prevent first user sweep
         k = tokenAAmount * ethAmount;
         tokenFeePercent = _feeSettings[0];
         ethFeePercent = _feeSettings[1];
@@ -218,21 +170,34 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         poolState = PoolState.inUse;
         VERSION = _version;
         poolType = PoolType.bonding;
+        supraOraclePull = ISupraOraclePull(_supraOraclePull);
 
         //marketCap/ethPrice = circulatingSupply*collectingEth**2/k; let's say marketCap= circulatingSupply * ethAmount/tokenAamount;
         // circulatingSupply = 10 ** getDecimal() * (marketCap * 10 ** 18 / getLatestPrice()) * (k / _buySellFeeSettings[3] ** 2); //setting decimal;
         circulatingSupply = tokenAAmount;
     }
 
-    function getLatestPrice() public view returns (uint256) {
-        (uint80 roundID, int256 price,, uint256 timeStamp, uint80 answeredInRound) =
-            AggregatorV3Interface(ethPriceFeed).latestRoundData();
+    // function getLatestPrice() public view returns (uint256) {
+    //     (uint80 roundID, int256 price,, uint256 timeStamp, uint80 answeredInRound) =
+    //         AggregatorV3Interface(supraFeedClient).latestRoundData();
 
-        uint256 decimalsFeed = AggregatorV3Interface(ethPriceFeed).decimals();
+    //     uint256 decimalsFeed = AggregatorV3Interface(supraFeedClient).decimals();
+    //     // Validate price feed data
+    //     require(price > 0 && answeredInRound >= roundID && timeStamp != 0);
+
+    //     return uint256(price) * 10 ** (18 - decimalsFeed); // Price comes with variable decimals but we need 18
+    // }
+    function getLatestPrice() public view returns (uint256, uint256) {
+        uint256[4] memory response = IFeedClient(supraFeedClient).getPrice(uint64(1)); // 1 is feedIndex of ETH_USDT
+
+        uint256 decimalsFeed = response[1];
+        uint256 updateTimestamp = response[2] / MILLISECOND_CONVERSION_FACTOR;
+        uint256 price = response[3];
         // Validate price feed data
-        require(price > 0 && answeredInRound >= roundID && timeStamp != 0);
+        // require(price > 0, "zero price");
+        // require(block.timestamp - updateTimestamp <= staleTimeThreshold, "Stale price data");
 
-        return uint256(price) * 10 ** (18 - decimalsFeed); // Price comes with variable decimals but we need 18
+        return (uint256(price) * 10 ** (18 - decimalsFeed), updateTimestamp); // Price comes with variable decimals but we need 18
     }
 
     function getDecimal() public view returns (uint8) {
@@ -248,7 +213,6 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         return (holders.length(), _holders);
     }
 
-    // last 3 is routerVersion, tokenId, pair addr
     function getPoolInfo()
         external
         view
@@ -262,11 +226,10 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
             uint256,
             address,
             address[] memory,
-            uint256,
             uint256
         )
     {
-        uint256 tokenPrice = getTokenPrice();
+        // uint256 tokenPrice = getTokenPrice();
         uint8[] memory state = new uint8[](3);
         uint256[] memory info = new uint256[](6);
         address[] memory _holders = new address[](holders.length());
@@ -293,12 +256,12 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
             tokenId,
             v3Pair,
             _holders,
-            tokenPrice,
+            // tokenPrice,
             tokenTotalSupply
         );
     }
 
-    function swap(uint256 _amount, uint256 _type) public payable inProgress {
+    function swap(uint256 _amount, uint256 _type, bytes calldata _bytesProof) public payable inProgress {
         // type==1 ? buy: type==2? sell
         uint256 amount = _type == 1 ? msg.value : _amount;
         require(amount > 0, "Cant buy or sell 0");
@@ -313,6 +276,7 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         uint256 dy;
         // uint256 dy = getReserves(amount, _type);
         uint256 _tokenPrice;
+        uint256 updateTimestamp;
         uint256 currentMK;
         if (_type == 2) {
             //sell
@@ -337,7 +301,13 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
             holders.add(msg.sender);
             tokenAAmount = tokenAAmount - dy;
             ethAmount = ethAmount + amount - buyFeeAmount;
-            _tokenPrice = getTokenPrice();
+            (_tokenPrice, updateTimestamp) = getTokenPrice();
+            if (block.timestamp - updateTimestamp > staleTimeThreshold) {
+                supraOraclePull.verifyOracleProof(_bytesProof); //If it fails, txn reverts
+                (_tokenPrice, updateTimestamp) = getTokenPrice();
+            }
+
+            require(block.timestamp - updateTimestamp <= staleTimeThreshold, "Stale price data"); //@note This might be removed later
             currentMK = _tokenPrice * circulatingSupply;
             if (currentMK >= marketCap * (10 ** (18 + getDecimal()))) {
                 // to make same 18 decimal and totalSupply has token decimal so did it
@@ -386,7 +356,7 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         fee = 2500;
         //uniswap V3
         // fee = 3000;
-        address currency = INonfungiblePositionManager(router).WETH9();
+        address currency = INonfungiblePositionManager(nonfungiblePositionManager).WETH9();
         if (currencyAmount > 0) {
             IWETH(currency).deposit{value: currencyAmount}();
         }
@@ -407,13 +377,13 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
             amount1ToAdd = tokenAmount;
         }
         {
-            v3Pair = INonfungiblePositionManager(router).createAndInitializePoolIfNecessary(
+            v3Pair = INonfungiblePositionManager(nonfungiblePositionManager).createAndInitializePoolIfNecessary(
                 token0, token1, fee, uint160(Math.sqrt(Math.mulDiv(amount1ToAdd, 2 ** 192, amount0ToAdd)))
             );
-            tickSpacing = IUniswapV3Pair(v3Pair).tickSpacing();
+            tickSpacing = IUniswapV3Pool(v3Pair).tickSpacing();
         }
-        IERC20(token0).forceApprove(router, amount0ToAdd);
-        IERC20(token1).forceApprove(router, amount1ToAdd);
+        IERC20(token0).forceApprove(nonfungiblePositionManager, amount0ToAdd);
+        IERC20(token1).forceApprove(nonfungiblePositionManager, amount1ToAdd);
         INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
             token0: token0,
             token1: token1,
@@ -429,22 +399,22 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         });
 
         (uint256 _tokenId, uint128 _liquidity, uint256 amount0, uint256 amount1) =
-            INonfungiblePositionManager(router).mint(params);
+            INonfungiblePositionManager(nonfungiblePositionManager).mint(params);
 
         uint256 liquidity = uint256(_liquidity);
         tokenId = _tokenId;
 
-        IPoolManager(poolManager).removeTopPool(address(this));
+        // IPoolManager(poolManager).removeTopPool(address(this));
         emit Finalized(liquidity, block.timestamp);
     }
 
-    function getTokenPrice() public view returns (uint256) {
-        uint256 ethPrice = getLatestPrice(); // eth price in usd comes with 18 decimal;
+    function getTokenPrice() public view returns (uint256, uint256) {
+        (uint256 ethPrice, uint256 updateTime) = getLatestPrice(); // eth price in usd comes with 18 decimal;
         if (tokenAAmount > 0) {
             uint256 currentRate = (ethAmount * ethPrice) / (tokenAAmount * (10 ** (18 - getDecimal())));
-            return currentRate;
+            return (currentRate, updateTime);
         } else {
-            return 0;
+            return (0, 0);
         }
     }
 
@@ -453,7 +423,7 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
     }
 
     function emergencyWithdrawLiquidity() external onlyOwner {
-        INonfungiblePositionManager(router).safeTransferFrom(address(this), msg.sender, tokenId);
+        INonfungiblePositionManager(nonfungiblePositionManager).safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
     function emergencyWithdrawToken(address payaddress, address tokenAddress, uint256 tokens) external onlyOwner {

@@ -9,6 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IUniswapV2Router02} from "@uniswap/v2-periphery/interfaces/IUniswapV2Router02.sol";
 import {IUniswapV2Factory} from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/interfaces/INonfungiblePositionManager.sol";
+import {IFeeManager} from "../interfaces/IFeeManager.sol";
 
 contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     using SafeERC20 for IERC20;
@@ -18,7 +19,6 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
         string symbol;
         uint8 _decimals;
         uint256 _totalSupply;
-        address _serviceFeeReceiver;
         address _taxReceiver;
         uint256 maxTransaction;
         uint256 maxWallet;
@@ -33,12 +33,10 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
         uint256 lpSellFee; //percent 10^6
         uint256 buyBurnPercent; //percent 10^6
         uint256 sellBurnPercent; //percent 10^6
-        uint256 serviceFee;
     }
 
     uint8 private _decimals;
     uint256 private _totalSupply;
-    address payable private serviceFeeReceiver;
     address payable private taxReceiver;
     uint256 private maxTransaction;
     uint256 private maxWallet;
@@ -58,12 +56,14 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
 
     mapping(address => bool) public automatedMarketMakerPairs;
     mapping(address => bool) public whiteList;
+    bytes32 public constant DEPLOYMENT_KEY = keccak256("ADVANCED_TOKEN");
+    IFeeManager private constant FEE_MANAGER = IFeeManager(address(0));
 
     constructor(Args memory args) payable ERC20(args.name, args.symbol) Ownable(msg.sender) {
         _decimals = args._decimals;
         _totalSupply = args._totalSupply;
-        serviceFeeReceiver = payable(args._serviceFeeReceiver);
-        require(msg.value >= args.serviceFee, "Service fee is not enough!");
+        uint256 serviceFee = FEE_MANAGER.getPrice(DEPLOYMENT_KEY);
+        require(msg.value >= serviceFee, "Service fee is not enough!");
         taxReceiver = payable(args._taxReceiver);
         maxTransaction = args.maxTransaction;
         maxWallet = args.maxWallet;
@@ -84,22 +84,15 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
         require(buyBurnPercent <= 200000 && sellBurnPercent <= 200000, "Burning percent can't be greater than 20%!");
         super._approve(address(this), address(dexRouter), MAX);
         _mint(msg.sender, _totalSupply);
-        (bool os,) = payable(serviceFeeReceiver).call{value: args.serviceFee}("");
-        require(os);
+        (bool success,) = payable(address(FEE_MANAGER)).call{value: msg.value}("");
+        require(success);
         if (dexType == 2) {
             mainPair = IUniswapV2Factory(IUniswapV2Router02(dexRouter).factory()).createPair(
                 address(this), IUniswapV2Router02(dexRouter).WETH()
             );
-        } else {
+        } else if (dexType == 3) {
             // for V3
-            uint24 fee;
-            if (dexType == 3) {
-                //pancakeswap V3
-                fee = 2500;
-            } else if (dexType == 4) {
-                //uniswap V3
-                fee = 3000;
-            }
+            uint24 fee = 3000;
             address token0;
             address token1;
             uint256 amount0ToAdd;

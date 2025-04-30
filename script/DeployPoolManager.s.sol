@@ -8,8 +8,8 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract DeployPoolManager is Script {
-    address _WETH;
-    address _ethUSDTPool;
+  
+    address initialOwner = address(0x6c8fcDeb117a1d40Cd2c2eB6ECDa58793FD636b1);
 
     function run() external {
         vm.startBroadcast();
@@ -18,7 +18,7 @@ contract DeployPoolManager is Script {
 
         ProxyAdmin proxyAdmin = new ProxyAdmin(msg.sender);
 
-        bytes memory data = abi.encodeWithSelector(PoolManager.initialize.selector, _WETH, _ethUSDTPool);
+        bytes memory data = abi.encodeWithSelector(PoolManager.initialize.selector, initialOwner);
 
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(logic), address(proxyAdmin), data);
 

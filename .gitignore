@@ -12,3 +12,7 @@ docs/
 
 # Dotenv file
 .env
+supra/
+broadcast/
+Supra.t.sol
+SupraOraclePullScript.s.sol
