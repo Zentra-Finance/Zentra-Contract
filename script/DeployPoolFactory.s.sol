@@ -13,7 +13,7 @@ contract DeployPoolFactory is Script {
         address _master = address(0x6c8fcDeb117a1d40Cd2c2eB6ECDa58793FD636b1);
         address _bondingmaster = address(0xf61772faB2c2A32480CC29765EE5be153E5Cf2d3);
         address _poolmanager = address(0xEDBe3C2004C9f3C84597ECBbC65ded1808987DEa);
-        address _fairmaster = address(0xFE05805041709a32E8Db9876a3276b0429082E96);
+        address _fairmaster = address(0x3693BE8617DD7fFbB031A6536030aEBFAd361fa8);
         uint8 _version = 1;
         uint256 _kycPrice = 0.2 ether;
         uint256 _auditPrice = 0.15 ether;
@@ -60,6 +60,7 @@ contract DeployPoolFactory is Script {
         // Deploy proxy with initializer
         TransparentUpgradeableProxy proxy =
             new TransparentUpgradeableProxy(address(impl), address(proxyAdmin), initData);
+            PoolFactory(payable(address(0x8901Dc6232C767ae7e974aeEA97284722905704A))).setBuySellFeeSettings([uint256(1), 1, 6900, 1e18]);
 
         vm.stopBroadcast();
 

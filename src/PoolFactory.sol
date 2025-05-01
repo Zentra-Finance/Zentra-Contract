@@ -35,8 +35,9 @@ contract PoolFactory is OwnableUpgradeable {
     uint256 public contributeWithdrawFee; //1% ~ 100 but 10000 is 100%
     uint256 public bondingTokenCreationFee;
     uint256 public ethToBonding;
-    uint256[4] public buySellFeeSettings = [1, 1, 6900, 1e18]; // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
-uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ETHFeePercent (after finalize) 5%
+    uint256[4] public buySellFeeSettings; // = [1, 1, 6900, 1e18] // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
+    uint256[2] public feeSettings; //  = [0, 5] // tokenFeePercent (after finalize) //ETHFeePercent (after finalize) 5%
+
     using Clones for address;
 
     address payable public adminWallet;
@@ -127,21 +128,17 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
         contributeWithdrawFee = _fees;
     }
 
-  
     function initalizeBondingClone(
         // uint8 _routerVersion,
         address _pair,
         address[4] memory _addrs, //[0] = new token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = supraFeedClient
-        // uint256[2] memory _feeSettings,
-        // uint256[4] memory _buySellFeeSettings, //[0] = buy Fee, [1] = sell fee, [2] = market cap settings [3] = target eth to collect on pool
         string memory _poolDetails,
         address _supraOraclePull
     ) internal {
         IBondingPool(_pair).initialize(
-            // _routerVersion,
-            _addrs,
-            feeSettings,
-            buySellFeeSettings,
+            _addrs, //[0] = template token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = supraFeedClient
+            feeSettings, // [0] = is for token fee when finish time, [1] = eth fee when finish time
+            buySellFeeSettings, //  [0] = buy Fee, [1] = sell fee, [2] = market cap settings [3] =  initialEthAmount(1eth * 10**18) for ethereum
             _poolDetails,
             [master, poolManager, adminWallet],
             version,
@@ -149,13 +146,8 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
         );
     }
 
- 
     function createBondingToken(
         address creator,
-        // address[4] memory _addrs, //[0] = template token addr, [1] = router (NonfungiblePositionManager), [2] = governance , [3] = supraFeedClient
-        // uint256[2] memory _feeSettings, // [0] = is for token fee when finish time, [1] = eth fee when finish time
-        // uint256[4] memory _buySellFeeSettings, // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
-        // uint256[2] memory _createFeeSettings, // [0] = creation fee, [1] = eth amount to bonding pool //@audit-issue  should not be passing this manually
         string memory _poolDetails,
         string[2] memory tokenInfo //[0] = name, [1] = symbol
     ) external payable {
@@ -179,15 +171,7 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
 
         // address governance = _addrs[2];
         // _addrs[0] = token;
-        initalizeBondingClone(
-            // _routerVersion,
-            pair,
-            _addrs,
-            // _feeSettings,
-            // _buySellFeeSettings,
-            _poolDetails,
-            supraOraclePull
-        );
+        initalizeBondingClone(pair, _addrs, _poolDetails, supraOraclePull);
 
         IPoolManager(poolManager).addAllowedPools(pair);
         IPoolManager(poolManager).registerBondingPool(pair, _addrs[0], _addrs[2], version);
@@ -238,10 +222,7 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
         address[4] memory _addrs, // [0] = token, [1] = router, [2] = governance , [3] = currency
         uint256[2] memory _capSettings, //[0] = softCap, [1] = totalToken
         uint256[3] memory _timeSettings, // [0] =startTime, [1] =endTime, [2]=liquidityLockDays
-        // uint256[2] memory _feeSettings, // [0] = tokenFeePercent, [1] = ethFeePercent
         uint256[3] memory _auditKRVTokenId, //[0] = audit (if 1, it means collect fees), [1] = kyc (if 1, it means collect fees), [2] = routerVersion (2 ==v2 or 3 ==v3)
-        // uint256 _audit,
-        // uint256 _kyc,
         uint256[2] memory _liquidityPercent, // [0] = liquidityPercent, [1]= refundType
         string memory _poolDetails,
         string[3] memory _otherInfo
@@ -258,7 +239,6 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
 
         bytes32 salt = keccak256(abi.encodePacked(_poolDetails, block.timestamp));
         address pair = Clones.cloneDeterministic(fairmaster, salt);
-
         initalizeFairClone(
             // _routerVersion,
             pair,
@@ -338,7 +318,6 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
 
         require(msg.value >= totalFees, "Payble Amount is less than required !!");
     }
-
 
     function _feesCount(uint256 _rate, uint256 _Lrate, uint256 _hardcap, uint256 _liquidityPercent, uint256 _fees)
         internal
@@ -445,8 +424,7 @@ uint256[2] public feeSettings = [0, 5]; // tokenFeePercent (after finalize) //ET
     function setFinalizeFeeSettings(uint256[2] memory _feeSettings) public onlyOwner {
         // require(_bondingToken != address(0), "Bonding Token address must be set!!");
         require(
-            _feeSettings[0] >= 0 && _feeSettings[0] <= 100 && _feeSettings[1] >= 0
-                && _feeSettings[1] <= 100,
+            _feeSettings[0] >= 0 && _feeSettings[0] <= 100 && _feeSettings[1] >= 0 && _feeSettings[1] <= 100,
             "Invalid buy sell fee settings. Must be percentage (0 -> 100)"
         );
         feeSettings = _feeSettings;

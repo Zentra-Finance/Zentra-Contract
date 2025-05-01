@@ -170,7 +170,6 @@ contract FairPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721Rece
 
         require(poolManager == address(0), "Pool: Forbidden");
         _validateInputs(_addrs, _capSettings, _timeSettings, _feeSettings, _liquidityPercent);
-
         __Ownable_init(_linkAddress[0]);
         _initializeAddresses(_addrs, _linkAddress);
         _initializeSettings(_capSettings, _timeSettings, _feeSettings, _auditKRVTokenId, _liquidityPercent);
@@ -206,7 +205,7 @@ contract FairPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721Rece
     }
 
     function _initializeAddresses(address[4] memory _addrs, address[3] memory _linkAddress) internal {
-        transferOwnership(_linkAddress[0]);
+        // transferOwnership(_linkAddress[0]);
         poolManager = _linkAddress[1];
         adminWallet = payable(_linkAddress[2]);
         token = _addrs[0];

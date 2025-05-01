@@ -144,7 +144,6 @@ contract BondingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, IERC721R
         require(_buySellFeeSettings[2] > 0, "Market Cap should be greater than 0!");
         require(_buySellFeeSettings[3] > 0, "Target Eth amount should be greater than 0!");
         __Ownable_init(_linkAddress[0]);
-        // transferOwnership(_linkAddress[0]);
         poolManager = _linkAddress[1];
         adminWallet = payable(_linkAddress[2]);
 
