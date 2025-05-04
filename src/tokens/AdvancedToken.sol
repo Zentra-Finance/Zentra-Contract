@@ -51,6 +51,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     uint256 private lpSellFee; //percent 10^6
     uint256 private buyBurnPercent; //percent 10^6
     uint256 private sellBurnPercent; //percent 10^6
+    bool private isInitializing;
     address public mainPair;
     uint256 private constant MAX = ~uint256(0);
 
@@ -83,6 +84,7 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
         require(lpBuyFee <= 200000 && lpSellFee <= 200000, "Liquidity adding fee can't be greater than 20%!");
         require(buyBurnPercent <= 200000 && sellBurnPercent <= 200000, "Burning percent can't be greater than 20%!");
         super._approve(address(this), address(dexRouter), MAX);
+        isInitializing = true;
         _mint(msg.sender, _totalSupply);
         (bool success,) = payable(address(FEE_MANAGER)).call{value: msg.value}("");
         require(success);
@@ -205,8 +207,12 @@ contract AdvancedToken is ERC20, Ownable, IERC721Receiver {
     }
 
     function _update(address from, address to, uint256 amount) internal override {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
+        // require(from != address(0), "ERC20: transfer from the zero address");
+        // require(to != address(0), "ERC20: transfer to the zero address");
+        if (isInitializing) {
+            super._update(from, to, amount);
+            isInitializing = false;
+        }
         if (whiteList[from] == true || whiteList[to] == true) {
             //whitelisted address
             super._update(from, to, amount);

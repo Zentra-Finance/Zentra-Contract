@@ -34,7 +34,7 @@ contract PoolFactory is OwnableUpgradeable {
     bool public IsEnabled;
     uint256 public contributeWithdrawFee; //1% ~ 100 but 10000 is 100%
     uint256 public bondingTokenCreationFee;
-    uint256 public ethToBonding;
+    uint256 public ethToBonding; // 0.1 ether (default)
     uint256[4] public buySellFeeSettings; // = [1, 1, 6900, 1e18] // [2] = market cap settings [3] = initialEthAmount(1eth * 10**18) for ethereum
     uint256[2] public feeSettings; //  = [0, 5] // tokenFeePercent (after finalize) //ETHFeePercent (after finalize) 5%
 
